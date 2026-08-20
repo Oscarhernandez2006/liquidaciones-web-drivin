@@ -1,0 +1,17 @@
+# No copiar a la imagen (más rápido y seguro)
+node_modules
+.next
+.git
+.gitignore
+
+# Secretos: las credenciales se inyectan en runtime, NUNCA en la imagen
+.env.local
+.env*.local
+
+# Dev / docs
+README.md
+Dockerfile
+.dockerignore
+npm-debug.log*
+.vscode
+db/setup.mjs
