@@ -1,0 +1,39 @@
+# ===========================================================================
+#  Despliegue del portal de liquidaciones detrás de Traefik.
+#  El contenedor escucha en el puerto 5462 (definido en el Dockerfile).
+#  Variables de conexión a Postgres se inyectan desde .env.local en ejecución.
+# ===========================================================================
+services:
+  liquidaciones-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: liquidaciones-web:latest
+    container_name: liquidaciones-web
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      # Router HTTPS
+      - "traefik.http.routers.liquidaciones.rule=Host(`mivariableliquidacion.grupo-santacruz.com`)"
+      - "traefik.http.routers.liquidaciones.entrypoints=websecure"
+      - "traefik.http.routers.liquidaciones.tls=true"
+      - "traefik.http.routers.liquidaciones.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.liquidaciones.service=liquidaciones"
+      # Puerto interno del contenedor al que Traefik envía el tráfico
+      - "traefik.http.services.liquidaciones.loadbalancer.server.port=5462"
+      # Red que Traefik debe usar para llegar al contenedor
+      - "traefik.docker.network=traefik"
+      # Redirección HTTP -> HTTPS
+      - "traefik.http.routers.liquidaciones-http.rule=Host(`mivariableliquidacion.grupo-santacruz.com`)"
+      - "traefik.http.routers.liquidaciones-http.entrypoints=web"
+      - "traefik.http.routers.liquidaciones-http.middlewares=liquidaciones-redirect"
+      - "traefik.http.middlewares.liquidaciones-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.liquidaciones-redirect.redirectscheme.permanent=true"
+
+networks:
+  traefik:
+    external: true

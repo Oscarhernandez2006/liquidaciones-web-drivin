@@ -1,6 +1,10 @@
 import Header from "@/components/Header";
 import ConsultaForm from "@/components/ConsultaForm";
 
+// El HTML no debe cachearse en CDN/navegador: cada deploy cambia los chunks y
+// un HTML viejo cacheado apuntaría a assets inexistentes (404 para todos).
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <main className="min-h-screen">
