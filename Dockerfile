@@ -1,7 +1,7 @@
 # ===========================================================================
 #  Dockerfile para el portal web (Next.js 14, salida standalone)
 #  Build:  docker build -t liquidaciones-web .
-#  Run:    docker run -p 3000:3000 --env-file .env.local liquidaciones-web
+#  Run:    docker run -p 5462:5462 --env-file .env.local liquidaciones-web
 #  Las variables (PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD, PGSSL) se
 #  inyectan en tiempo de EJECUCIÓN desde el panel del servidor, NO se copian.
 # ===========================================================================
@@ -38,8 +38,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 5462
+ENV PORT=5462
 # Necesario para que escuche en todas las interfaces dentro del contenedor.
 ENV HOSTNAME="0.0.0.0"
 
