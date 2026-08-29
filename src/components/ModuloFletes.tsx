@@ -158,9 +158,10 @@ interface Props {
   codigoVehiculo: string;
   nombre: string;
   onVolver: () => void;
+  tituloClaro?: boolean;
 }
 
-export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolver }: Props) {
+export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolver, tituloClaro = true }: Props) {
   const [fletes, setFletes] = useState<Flete[]>([]);
   const [cargandoLista, setCargandoLista] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -509,8 +510,12 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
     <div className="mx-auto max-w-4xl">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-white">Registrar flete · {nombre}</h2>
-          <p className="text-sm text-white/70">Registra los fletes que realizas.</p>
+          <h2 className={`text-lg font-bold ${tituloClaro ? "text-white" : "text-drivin-ink"}`}>
+            Registrar flete · {nombre}
+          </h2>
+          <p className={`text-sm ${tituloClaro ? "text-white/70" : "text-drivin-muted"}`}>
+            Registra los fletes que realizas.
+          </p>
         </div>
         <button
           onClick={onVolver}
