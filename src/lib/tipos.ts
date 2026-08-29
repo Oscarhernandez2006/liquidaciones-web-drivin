@@ -46,3 +46,38 @@ export interface ConsultaResultado {
   domiciliario: DomiciliarioInfo;
   liquidaciones: LiquidacionResumen[];
 }
+
+/** Flete registrado por un domiciliario. */
+export interface Flete {
+  id: string;
+  consecutivo: number; // trazabilidad global
+  codigo: string; // FLE-000001
+  numero: number; // número de flete del domiciliario
+  fecha: string; // YYYY-MM-DD
+  origen: string;
+  destino: string;
+  descripcion: string;
+  kilos: number;
+  origenLat: number | null;
+  origenLng: number | null;
+  destinoLat: number | null;
+  destinoLng: number | null;
+  kilometros: number | null;
+  completado: boolean;
+  creadoEn: string;
+}
+
+/** Datos para registrar un nuevo flete. */
+export interface FleteEntrada {
+  fecha: string; // YYYY-MM-DD
+  origen: string;
+  destino: string;
+  descripcion: string;
+  kilos: number;
+  origenLat: number | null;
+  origenLng: number | null;
+  destinoLat: number | null;
+  destinoLng: number | null;
+  kilometros: number | null;
+  completado: boolean;
+}

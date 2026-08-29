@@ -11,7 +11,7 @@ export default function Home() {
       <Header />
 
       {/* Encabezado con acento de marca */}
-      <div className="bg-drivin-dark pb-16 pt-8 text-center">
+      <div className="bg-drivin-dark pb-12 pt-4 text-center">
         <h1 className="px-5 text-2xl font-extrabold text-white sm:text-3xl">
           Tu liquidación de incentivos, siempre a la mano
         </h1>
@@ -21,7 +21,7 @@ export default function Home() {
       </div>
 
       {/* Formulario superpuesto */}
-      <div className="mx-auto -mt-10 max-w-5xl px-5 pb-16">
+      <div className="mx-auto -mt-8 max-w-5xl px-5 pb-16">
         <ConsultaForm />
       </div>
     </main>

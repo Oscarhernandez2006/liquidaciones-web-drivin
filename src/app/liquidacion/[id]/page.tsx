@@ -13,17 +13,29 @@ type Estado = "cargando" | "ok" | "sin-credenciales" | "no-encontrado" | "error"
 export default function DetalleLiquidacionPage({ params }: { params: { id: string } }) {
   const [detalle, setDetalle] = useState<LiquidacionDetalle | null>(null);
   const [estado, setEstado] = useState<Estado>("cargando");
+  const [volverHref, setVolverHref] = useState("/");
 
   useEffect(() => {
+    // En modo maestro las credenciales del domiciliario elegido llegan por query;
+    // si no, se usan las de la sesión del propio domiciliario.
+    const sp = new URLSearchParams(window.location.search);
+    const docUrl = sp.get("documento");
+    const codUrl = sp.get("codigo");
+    const esMaestro = Boolean(docUrl && codUrl);
+    if (esMaestro) setVolverHref("/maestro");
+
     const s = obtenerSesion();
-    if (!s) {
+    const documento = docUrl ?? s?.documento ?? "";
+    const codigo = codUrl ?? s?.codigoVehiculo ?? "";
+
+    if (!documento || !codigo) {
       setEstado("sin-credenciales");
       return;
     }
 
     const url =
       `/api/liquidacion/${encodeURIComponent(params.id)}` +
-      `?documento=${encodeURIComponent(s.documento)}&codigo=${encodeURIComponent(s.codigoVehiculo)}`;
+      `?documento=${encodeURIComponent(documento)}&codigo=${encodeURIComponent(codigo)}`;
 
     fetch(url)
       .then(async (res) => {
@@ -46,10 +58,10 @@ export default function DetalleLiquidacionPage({ params }: { params: { id: strin
       <Header />
       <div className="mx-auto max-w-4xl px-5 py-8">
         <Link
-          href="/"
+          href={volverHref}
           className="no-print mb-4 inline-flex items-center gap-1 text-sm font-semibold text-drivin-indigoDark hover:underline"
         >
-          ← Volver a mis liquidaciones
+          ← Volver
         </Link>
 
         {estado === "cargando" && <OverlayCargando mensaje="Cargando tu liquidación…" />}

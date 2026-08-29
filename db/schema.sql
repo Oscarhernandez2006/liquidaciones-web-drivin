@@ -47,3 +47,72 @@ CREATE INDEX IF NOT EXISTS ix_liqpub_doc_cod
 --   "variableKm":     95000,
 --   "total":          575000
 -- }
+
+-- ============================================================================
+--  Fletes registrados por el domiciliario (módulo "Registrar flete").
+--  Cada domiciliario habilitado registra los fletes que realiza.
+-- ============================================================================
+
+-- Secuencia para el consecutivo global de trazabilidad (FLE-000001).
+CREATE SEQUENCE IF NOT EXISTS fletes_consecutivo_seq;
+
+CREATE TABLE IF NOT EXISTS fletes_registrados (
+    id               uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+    documento        varchar(30)   NOT NULL,   -- documento del domiciliario
+    codigo_vehiculo  varchar(50)   NOT NULL,   -- placa/código asignado
+    fecha            date          NOT NULL,   -- fecha del flete
+    origen           varchar(200)  NOT NULL,
+    destino          varchar(200)  NOT NULL,
+    descripcion      text          NOT NULL,   -- detalle del servicio
+    kilos            numeric(12,2) NOT NULL DEFAULT 0,  -- kilos enviados
+    origen_lat       numeric(9,6),             -- geolocalización de origen
+    origen_lng       numeric(9,6),
+    destino_lat      numeric(9,6),             -- geolocalización de destino
+    destino_lng      numeric(9,6),
+    kilometros       numeric(10,2),            -- distancia calculada origen→destino
+    completado       boolean       NOT NULL DEFAULT false,  -- flete terminado
+    enviado          boolean       NOT NULL DEFAULT false,  -- enviado a liquidación
+    enviado_en       timestamptz,
+    consecutivo      bigint        NOT NULL DEFAULT nextval('fletes_consecutivo_seq'),  -- trazabilidad global (FLE-000001)
+    numero           integer,                  -- número de flete del domiciliario (1, 2, 3, …)
+    creado_en        timestamptz   NOT NULL DEFAULT now()
+);
+
+-- Columnas de geolocalización (migración para tablas ya existentes).
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS origen_lat  numeric(9,6);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS origen_lng  numeric(9,6);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS destino_lat numeric(9,6);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS destino_lng numeric(9,6);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS kilometros  numeric(10,2);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS completado  boolean NOT NULL DEFAULT false;
+
+-- Envío a liquidación: el flete completado se envía a la app de liquidación.
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS enviado     boolean NOT NULL DEFAULT false;
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS enviado_en  timestamptz;
+
+-- Campos que digita el liquidador en la app de escritorio.
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS ruta              varchar(20);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS flete_consolidado numeric(14,2);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS flete             numeric(14,2);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS liquidado         boolean NOT NULL DEFAULT false;
+
+-- Consecutivo global (trazabilidad) y número por domiciliario.
+ALTER TABLE fletes_registrados
+    ADD COLUMN IF NOT EXISTS consecutivo bigint NOT NULL DEFAULT nextval('fletes_consecutivo_seq');
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS numero integer;
+
+-- Backfill del número por domiciliario para filas existentes sin número.
+WITH ord AS (
+    SELECT id,
+           ROW_NUMBER() OVER (PARTITION BY documento, codigo_vehiculo ORDER BY consecutivo) AS rn
+      FROM fletes_registrados
+     WHERE numero IS NULL
+)
+UPDATE fletes_registrados f
+   SET numero = ord.rn
+  FROM ord
+ WHERE f.id = ord.id;
+
+-- Consulta de fletes por domiciliario.
+CREATE INDEX IF NOT EXISTS ix_fletes_doc_cod
+    ON fletes_registrados (documento, codigo_vehiculo);

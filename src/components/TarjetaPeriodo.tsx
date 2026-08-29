@@ -3,10 +3,26 @@ import type { LiquidacionResumen } from "@/lib/tipos";
 import { moneda } from "@/lib/formato";
 
 /** Tarjeta de un período liquidado (gradiente índigo, igual que el aplicativo). */
-export default function TarjetaPeriodo({ liquidacion }: { liquidacion: LiquidacionResumen }) {
+export default function TarjetaPeriodo({
+  liquidacion,
+  documento,
+  codigo,
+}: {
+  liquidacion: LiquidacionResumen;
+  documento?: string;
+  codigo?: string;
+}) {
+  // En modo maestro se pasan documento+código por query para ver el detalle del domiciliario elegido.
+  const href =
+    documento && codigo
+      ? `/liquidacion/${liquidacion.id}?documento=${encodeURIComponent(
+          documento
+        )}&codigo=${encodeURIComponent(codigo)}`
+      : `/liquidacion/${liquidacion.id}`;
+
   return (
     <Link
-      href={`/liquidacion/${liquidacion.id}`}
+      href={href}
       className="group flex flex-col rounded-xl bg-gradient-to-br from-drivin-indigo to-drivin-indigoDark p-5 text-white shadow-tarjeta transition hover:brightness-110"
     >
       <div className="flex items-center gap-2">

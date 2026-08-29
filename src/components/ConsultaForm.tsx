@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import type { ConsultaResultado } from "@/lib/tipos";
 import TarjetaPeriodo from "./TarjetaPeriodo";
+import ModuloFletes from "./ModuloFletes";
 import { guardarSesion, obtenerSesion, limpiarSesion } from "@/lib/sesion";
+import { DOMICILIARIO_FLETE, esDomiciliarioFlete } from "@/lib/fleteDomiciliario";
+
+type Vista = "form" | "menu" | "fletes";
 
 export default function ConsultaForm() {
   const [documento, setDocumento] = useState("");
@@ -13,6 +17,7 @@ export default function ConsultaForm() {
   const [resultado, setResultado] = useState<ConsultaResultado | null>(null);
   const [buscado, setBuscado] = useState(false);
   const [cargaInicial, setCargaInicial] = useState(true);
+  const [vista, setVista] = useState<Vista>("form");
 
   // Al montar: si hay una sesión vigente, muestra las liquidaciones sin volver a pedir los datos.
   useEffect(() => {
@@ -20,7 +25,12 @@ export default function ConsultaForm() {
     if (s) {
       setDocumento(s.documento);
       setCodigo(s.codigoVehiculo);
-      ejecutarConsulta(s.documento, s.codigoVehiculo).finally(() => setCargaInicial(false));
+      if (esDomiciliarioFlete(s.documento, s.codigoVehiculo)) {
+        setVista("menu");
+        setCargaInicial(false);
+      } else {
+        ejecutarConsulta(s.documento, s.codigoVehiculo).finally(() => setCargaInicial(false));
+      }
     } else {
       setCargaInicial(false);
     }
@@ -62,6 +72,12 @@ export default function ConsultaForm() {
       setError("Ingresa tu documento y tu código de vehículo.");
       return;
     }
+    if (esDomiciliarioFlete(documento.trim(), codigo.trim())) {
+      guardarSesion(documento.trim(), codigo.trim().toUpperCase());
+      setError(null);
+      setVista("menu");
+      return;
+    }
     void ejecutarConsulta(documento.trim(), codigo.trim());
   }
 
@@ -72,7 +88,10 @@ export default function ConsultaForm() {
     setDocumento("");
     setCodigo("");
     setError(null);
+    setVista("form");
   }
+
+  const esEspecial = esDomiciliarioFlete(documento, codigo);
 
   const sesionActiva = !!resultado && resultado.liquidaciones.length > 0;
 
@@ -82,6 +101,52 @@ export default function ConsultaForm() {
       <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-xl border border-drivin-border bg-white p-10 shadow-tarjeta">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-drivin-border border-t-drivin-indigo" />
         <p className="text-sm font-medium text-drivin-muted">Cargando tus liquidaciones…</p>
+      </div>
+    );
+  }
+
+  // Módulo de registro de fletes (domiciliario habilitado).
+  if (vista === "fletes") {
+    return (
+      <ModuloFletes
+        documento={documento}
+        codigoVehiculo={codigo.toUpperCase()}
+        nombre={DOMICILIARIO_FLETE.nombre}
+        onVolver={() => setVista("menu")}
+      />
+    );
+  }
+
+  // Menú de opciones (solo domiciliario habilitado para fletes).
+  if (vista === "menu") {
+    return (
+      <div className="mx-auto max-w-md rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta">
+        <h1 className="text-xl font-bold text-drivin-ink">Hola, {DOMICILIARIO_FLETE.nombre}</h1>
+        <p className="mt-1 text-sm text-drivin-muted">¿Qué deseas hacer?</p>
+
+        <div className="mt-5 space-y-3">
+          <button
+            onClick={() => {
+              setVista("form");
+              void ejecutarConsulta(documento.trim(), codigo.trim());
+            }}
+            className="w-full rounded-lg bg-drivin-indigo py-3 text-sm font-bold text-white transition hover:bg-drivin-indigoDark"
+          >
+            Consultar mi liquidación
+          </button>
+          <button
+            onClick={() => setVista("fletes")}
+            className="w-full rounded-lg border border-drivin-indigo bg-white py-3 text-sm font-bold text-drivin-indigo transition hover:bg-drivin-bg"
+          >
+            Registrar flete
+          </button>
+          <button
+            onClick={salir}
+            className="block w-full text-center text-sm font-semibold text-drivin-muted hover:text-drivin-ink"
+          >
+            Salir
+          </button>
+        </div>
       </div>
     );
   }
@@ -100,12 +165,22 @@ export default function ConsultaForm() {
                 Tienes {resultado!.liquidaciones.length} liquidación(es). Toca una para ver el detalle.
               </p>
             </div>
-            <button
-              onClick={salir}
-              className="rounded-lg border border-drivin-border bg-white px-4 py-2 text-sm font-semibold text-drivin-muted transition hover:bg-drivin-bg"
-            >
-              Salir
-            </button>
+            <div className="flex gap-2">
+              {esEspecial && (
+                <button
+                  onClick={() => setVista("menu")}
+                  className="rounded-lg border border-drivin-border bg-white px-4 py-2 text-sm font-semibold text-drivin-muted transition hover:bg-drivin-bg"
+                >
+                  Volver
+                </button>
+              )}
+              <button
+                onClick={salir}
+                className="rounded-lg border border-drivin-border bg-white px-4 py-2 text-sm font-semibold text-drivin-muted transition hover:bg-drivin-bg"
+              >
+                Salir
+              </button>
+            </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {resultado!.liquidaciones.map((l) => (
@@ -164,6 +239,13 @@ export default function ConsultaForm() {
             >
               {cargando ? "Consultando…" : "Consultar mi liquidación"}
             </button>
+
+            <a
+              href="/maestro"
+              className="block text-center text-sm font-semibold text-drivin-muted hover:text-drivin-ink"
+            >
+              Ingreso de usuario maestro
+            </a>
           </div>
         </form>
       )}
