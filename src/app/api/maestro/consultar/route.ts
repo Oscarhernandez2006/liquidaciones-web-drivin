@@ -5,7 +5,7 @@ import { verificarTokenMaestro } from "@/lib/maestroToken";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** POST { documento, codigoVehiculo } (header x-maestro-token) -> liquidaciones del domiciliario elegido. */
+/** POST { documento } (header x-maestro-token) -> liquidaciones del domiciliario elegido. */
 export async function POST(req: Request) {
   try {
     const token = req.headers.get("x-maestro-token");
@@ -15,13 +15,12 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const documento = String(body.documento ?? "").trim();
-    const codigoVehiculo = String(body.codigoVehiculo ?? "").trim();
 
-    if (!documento || !codigoVehiculo) {
+    if (!documento) {
       return NextResponse.json({ error: "Faltan datos." }, { status: 400 });
     }
 
-    const resultado = await consultarLiquidaciones(documento, codigoVehiculo);
+    const resultado = await consultarLiquidaciones(documento);
     if (!resultado) {
       return NextResponse.json({ error: "Sin resultados." }, { status: 404 });
     }

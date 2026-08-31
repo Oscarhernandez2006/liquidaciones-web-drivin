@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { consultarLiquidaciones } from "@/lib/consultas";
+import { consultarFueraRango } from "@/lib/fueraRango";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** POST { documento } -> liquidaciones del domiciliario. */
+/** POST { documento } -> períodos con pedidos fuera de rango del domiciliario. */
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
@@ -14,10 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Faltan datos." }, { status: 400 });
     }
 
-    const resultado = await consultarLiquidaciones(documento);
-    if (!resultado) {
-      return NextResponse.json({ error: "Sin resultados." }, { status: 404 });
-    }
+    const resultado = await consultarFueraRango(documento);
     return NextResponse.json(resultado);
   } catch {
     return NextResponse.json({ error: "Error del servidor." }, { status: 500 });

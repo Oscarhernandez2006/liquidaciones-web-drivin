@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const documento = String(body.documento ?? "").trim();
     const codigoVehiculo = String(body.codigoVehiculo ?? "").trim();
 
-    if (!esDomiciliarioFlete(documento, codigoVehiculo)) {
+    if (!esDomiciliarioFlete(documento)) {
       return NextResponse.json({ error: "No autorizado." }, { status: 403 });
     }
 

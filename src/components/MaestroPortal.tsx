@@ -125,7 +125,7 @@ export default function MaestroPortal() {
       const res = await fetch("/api/maestro/consultar", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-maestro-token": token },
-        body: JSON.stringify({ documento: dom.documento, codigoVehiculo: dom.codigoVehiculo }),
+        body: JSON.stringify({ documento: dom.documento }),
       });
       if (res.status === 401) {
         salir();
@@ -360,7 +360,6 @@ export default function MaestroPortal() {
                     key={l.id}
                     liquidacion={l}
                     documento={resultado.domiciliario.documento}
-                    codigo={resultado.domiciliario.codigoVehiculo}
                   />
                 ))}
               </div>

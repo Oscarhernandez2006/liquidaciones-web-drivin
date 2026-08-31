@@ -49,10 +49,33 @@ CREATE INDEX IF NOT EXISTS ix_liqpub_doc_cod
 -- }
 
 -- ============================================================================
+--  Pedidos confirmados fuera de rango publicados para el portal.
+--  El aplicativo publica, por domiciliario y período, la lista de pedidos
+--  confirmados cuyo punto de entrega quedó fuera de rango.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS fuera_rango_publicados (
+    id                uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+    documento         varchar(30)   NOT NULL,   -- cédula/documento del domiciliario
+    codigo_vehiculo   varchar(50)   NOT NULL,   -- placa/código asignado
+    nombre            varchar(200)  NOT NULL,
+    pdv               varchar(120),
+    periodo_etiqueta  varchar(120)  NOT NULL,   -- ej. "Agosto 2026 · Quincena 1"
+    rango_fechas      varchar(120)  NOT NULL,
+    fecha_desde       date          NOT NULL,
+    fecha_hasta       date          NOT NULL,
+    total             integer       NOT NULL DEFAULT 0,  -- cantidad de pedidos fuera de rango
+    -- Array JSON de filas: [{ "fecha", "nombreCliente", "distanciaConfirmada" }, ...]
+    detalle           jsonb         NOT NULL,
+    publicado_en      timestamptz   NOT NULL DEFAULT now(),
+    CONSTRAINT ux_frpub UNIQUE (documento, codigo_vehiculo, fecha_desde, fecha_hasta)
+);
+
+CREATE INDEX IF NOT EXISTS ix_frpub_doc ON fuera_rango_publicados (documento);
+
+-- ============================================================================
 --  Fletes registrados por el domiciliario (módulo "Registrar flete").
 --  Cada domiciliario habilitado registra los fletes que realiza.
 -- ============================================================================
-
 -- Secuencia para el consecutivo global de trazabilidad (FLE-000001).
 CREATE SEQUENCE IF NOT EXISTS fletes_consecutivo_seq;
 

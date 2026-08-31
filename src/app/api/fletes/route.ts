@@ -12,7 +12,7 @@ export async function GET(req: Request) {
     const documento = (searchParams.get("documento") ?? "").trim();
     const codigoVehiculo = (searchParams.get("codigoVehiculo") ?? "").trim();
 
-    if (!esDomiciliarioFlete(documento, codigoVehiculo)) {
+    if (!esDomiciliarioFlete(documento)) {
       return NextResponse.json({ error: "No autorizado." }, { status: 403 });
     }
 
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const documento = String(body.documento ?? "").trim();
     const codigoVehiculo = String(body.codigoVehiculo ?? "").trim();
 
-    if (!esDomiciliarioFlete(documento, codigoVehiculo)) {
+    if (!esDomiciliarioFlete(documento)) {
       return NextResponse.json({ error: "No autorizado." }, { status: 403 });
     }
 

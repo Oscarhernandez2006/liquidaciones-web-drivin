@@ -2,29 +2,19 @@ import Link from "next/link";
 import type { LiquidacionResumen } from "@/lib/tipos";
 import { moneda } from "@/lib/formato";
 
-/** Tarjeta de un período liquidado (gradiente índigo, igual que el aplicativo). */
+/** Tarjeta de un período liquidado (gradiente índigo, igual que el aplicativo).
+ *  Si se pasa onSelect actúa como botón (abre modal); si no, navega al detalle. */
 export default function TarjetaPeriodo({
   liquidacion,
   documento,
-  codigo,
+  onSelect,
 }: {
   liquidacion: LiquidacionResumen;
   documento?: string;
-  codigo?: string;
+  onSelect?: (id: string) => void;
 }) {
-  // En modo maestro se pasan documento+código por query para ver el detalle del domiciliario elegido.
-  const href =
-    documento && codigo
-      ? `/liquidacion/${liquidacion.id}?documento=${encodeURIComponent(
-          documento
-        )}&codigo=${encodeURIComponent(codigo)}`
-      : `/liquidacion/${liquidacion.id}`;
-
-  return (
-    <Link
-      href={href}
-      className="group flex flex-col rounded-xl bg-gradient-to-br from-drivin-indigo to-drivin-indigoDark p-5 text-white shadow-tarjeta transition hover:brightness-110"
-    >
+  const contenido = (
+    <>
       <div className="flex items-center gap-2">
         <span aria-hidden className="text-lg">
           🧾
@@ -57,6 +47,29 @@ export default function TarjetaPeriodo({
           Ver detalle →
         </span>
       </div>
+    </>
+  );
+
+  const clases =
+    "group flex flex-col rounded-xl bg-gradient-to-br from-drivin-indigo to-drivin-indigoDark p-5 text-left text-white shadow-tarjeta transition hover:brightness-110";
+
+  // Modo modal: botón que dispara onSelect.
+  if (onSelect) {
+    return (
+      <button type="button" onClick={() => onSelect(liquidacion.id)} className={clases}>
+        {contenido}
+      </button>
+    );
+  }
+
+  // Modo navegación: enlace al detalle. En modo maestro se pasa el documento por query.
+  const href = documento
+    ? `/liquidacion/${liquidacion.id}?documento=${encodeURIComponent(documento)}`
+    : `/liquidacion/${liquidacion.id}`;
+
+  return (
+    <Link href={href} className={clases}>
+      {contenido}
     </Link>
   );
 }

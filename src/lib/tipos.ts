@@ -47,6 +47,27 @@ export interface ConsultaResultado {
   liquidaciones: LiquidacionResumen[];
 }
 
+/** Un pedido confirmado fuera de rango. */
+export interface FueraRangoFila {
+  fecha: string; // dd/MM/yyyy
+  nombreCliente: string;
+  distanciaConfirmada: string; // ej. "450 Mts" o "No Confirmado"
+}
+
+/** Período publicado con los pedidos fuera de rango de un domiciliario. */
+export interface FueraRangoPeriodo {
+  id: string;
+  periodoEtiqueta: string;
+  rangoFechas: string;
+  total: number; // cantidad de pedidos fuera de rango
+  filas: FueraRangoFila[];
+}
+
+/** Resultado de la consulta de pedidos fuera de rango. */
+export interface FueraRangoResultado {
+  periodos: FueraRangoPeriodo[];
+}
+
 /** Flete registrado por un domiciliario. */
 export interface Flete {
   id: string;

@@ -174,6 +174,9 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
   const [descripcion, setDescripcion] = useState("");
   const [kilos, setKilos] = useState("");
 
+  // Ubicaciones personalizadas creadas por el usuario.
+  const [ubicacionesPersonalizadas, setUbicacionesPersonalizadas] = useState<string[]>([]);
+
   // Modal de edición.
   const [editando, setEditando] = useState<Flete | null>(null);
   const [eFecha, setEFecha] = useState("");
@@ -229,6 +232,20 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
     setDestino("");
     setDescripcion("");
     setKilos("");
+  }
+
+  function crearUbicacion(nombreUbicacion: string) {
+    const normalizado = nombreUbicacion.trim();
+    if (!normalizado) return;
+
+    // Evitar duplicados (case-insensitive)
+    const yaExiste =
+      PUNTOS.some(p => p.toLowerCase() === normalizado.toLowerCase()) ||
+      ubicacionesPersonalizadas.some(u => u.toLowerCase() === normalizado.toLowerCase());
+
+    if (!yaExiste) {
+      setUbicacionesPersonalizadas(prev => [...prev, normalizado]);
+    }
   }
 
   function abrirEdicion(f: Flete) {
@@ -549,8 +566,9 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                 <SelectorBuscable
                   value={origen}
                   onChange={setOrigen}
-                  opciones={PUNTOS}
+                  opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
                   placeholder="Selecciona o escribe…"
+                  onCrear={crearUbicacion}
                 />
               </div>
               <div>
@@ -558,8 +576,9 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                 <SelectorBuscable
                   value={destino}
                   onChange={setDestino}
-                  opciones={PUNTOS}
+                  opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
                   placeholder="Selecciona o escribe…"
+                  onCrear={crearUbicacion}
                 />
               </div>
             </div>
@@ -754,8 +773,9 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                   <SelectorBuscable
                     value={eOrigen}
                     onChange={setEOrigen}
-                    opciones={PUNTOS}
+                    opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
                     placeholder="Selecciona o escribe…"
+                    onCrear={crearUbicacion}
                   />
                 </div>
                 <div>
@@ -763,8 +783,9 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                   <SelectorBuscable
                     value={eDestino}
                     onChange={setEDestino}
-                    opciones={PUNTOS}
+                    opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
                     placeholder="Selecciona o escribe…"
+                    onCrear={crearUbicacion}
                   />
                 </div>
               </div>

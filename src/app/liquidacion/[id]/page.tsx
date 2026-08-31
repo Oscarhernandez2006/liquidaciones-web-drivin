@@ -20,22 +20,20 @@ export default function DetalleLiquidacionPage({ params }: { params: { id: strin
     // si no, se usan las de la sesión del propio domiciliario.
     const sp = new URLSearchParams(window.location.search);
     const docUrl = sp.get("documento");
-    const codUrl = sp.get("codigo");
-    const esMaestro = Boolean(docUrl && codUrl);
+    const esMaestro = Boolean(docUrl);
     if (esMaestro) setVolverHref("/maestro");
 
     const s = obtenerSesion();
     const documento = docUrl ?? s?.documento ?? "";
-    const codigo = codUrl ?? s?.codigoVehiculo ?? "";
 
-    if (!documento || !codigo) {
+    if (!documento) {
       setEstado("sin-credenciales");
       return;
     }
 
     const url =
       `/api/liquidacion/${encodeURIComponent(params.id)}` +
-      `?documento=${encodeURIComponent(documento)}&codigo=${encodeURIComponent(codigo)}`;
+      `?documento=${encodeURIComponent(documento)}`;
 
     fetch(url)
       .then(async (res) => {

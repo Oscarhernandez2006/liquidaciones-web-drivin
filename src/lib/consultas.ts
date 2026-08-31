@@ -7,21 +7,20 @@ import type {
 } from "@/lib/tipos";
 
 /**
- * Lista las liquidaciones publicadas de un domiciliario (documento + código de vehículo).
+ * Lista las liquidaciones publicadas de un domiciliario (solo documento).
  */
 export async function consultarLiquidaciones(
-  documento: string,
-  codigoVehiculo: string
+  documento: string
 ): Promise<ConsultaResultado | null> {
   const pool = obtenerPool();
 
   const { rows } = await pool.query(
     `SELECT id, nombre, pdv, periodo_etiqueta, rango_fechas,
-            cumple, estado_cumple, total
+            cumple, estado_cumple, total, codigo_vehiculo
        FROM liquidaciones_publicadas
-      WHERE documento = $1 AND codigo_vehiculo = $2
+      WHERE documento = $1
       ORDER BY fecha_desde DESC`,
-    [documento, codigoVehiculo]
+    [documento]
   );
 
   if (rows.length === 0) return null;
@@ -38,7 +37,7 @@ export async function consultarLiquidaciones(
   return {
     domiciliario: {
       documento,
-      codigoVehiculo,
+      codigoVehiculo: rows[0].codigo_vehiculo ?? "",
       nombre: rows[0].nombre,
       pdv: rows[0].pdv ?? "",
     },
@@ -47,23 +46,21 @@ export async function consultarLiquidaciones(
 }
 
 /**
- * Detalle de una liquidación. Exige documento + código para que un domiciliario
- * solo pueda ver la suya (evita enumerar identificadores).
+ * Detalle de una liquidación. Exige solo documento para verificación de seguridad básica.
  */
 export async function obtenerDetalle(
   id: string,
-  documento: string,
-  codigoVehiculo: string
+  documento: string
 ): Promise<LiquidacionDetalle | null> {
   const pool = obtenerPool();
 
   const { rows } = await pool.query(
     `SELECT id, nombre, pdv, periodo_etiqueta, rango_fechas,
-            cumple, estado_cumple, total, detalle
+            cumple, estado_cumple, total, detalle, codigo_vehiculo
        FROM liquidaciones_publicadas
-      WHERE id = $1 AND documento = $2 AND codigo_vehiculo = $3
+      WHERE id = $1 AND documento = $2
       LIMIT 1`,
-    [id, documento, codigoVehiculo]
+    [id, documento]
   );
 
   if (rows.length === 0) return null;
@@ -80,7 +77,7 @@ export async function obtenerDetalle(
     total: Number(r.total),
     domiciliario: {
       documento,
-      codigoVehiculo,
+      codigoVehiculo: r.codigo_vehiculo ?? "",
       nombre: r.nombre,
       pdv: r.pdv ?? "",
     },
