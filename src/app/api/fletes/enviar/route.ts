@@ -18,7 +18,8 @@ export async function POST(req: Request) {
 
     const fletes = await enviarFletes(documento, codigoVehiculo.toUpperCase());
     return NextResponse.json({ fletes });
-  } catch {
+  } catch (err) {
+    console.error("POST /api/fletes/enviar", err);
     return NextResponse.json({ error: "Error del servidor." }, { status: 500 });
   }
 }

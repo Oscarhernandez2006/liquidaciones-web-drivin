@@ -139,3 +139,37 @@ UPDATE fletes_registrados f
 -- Consulta de fletes por domiciliario.
 CREATE INDEX IF NOT EXISTS ix_fletes_doc_cod
     ON fletes_registrados (documento, codigo_vehiculo);
+
+-- ============================================================================
+--  Puntos de referencia (origen/destino) para el registro de fletes.
+--  Los administra la app de escritorio (módulo "Modificar Puntos Referencia")
+--  y los consume el portal web al registrar un flete.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS puntos_referencia_flete (
+    id               uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+    documento        varchar(30)   NOT NULL,   -- documento del domiciliario
+    codigo_vehiculo  varchar(50)   NOT NULL,   -- placa/código asignado
+    descripcion      varchar(200)  NOT NULL,   -- nombre del punto (ej. "Pdv Concord")
+    aplica_origen    boolean       NOT NULL DEFAULT true,
+    aplica_destino   boolean       NOT NULL DEFAULT true,
+    creado_en        timestamptz   NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ix_puntosref_doc_cod
+    ON puntos_referencia_flete (documento, codigo_vehiculo);
+
+-- Siembra los puntos que antes eran fijos en el portal, solo si el domiciliario no tiene ninguno aún.
+INSERT INTO puntos_referencia_flete (documento, codigo_vehiculo, descripcion, aplica_origen, aplica_destino)
+SELECT '1081026787', 'LZR889', d.descripcion, true, true
+  FROM (VALUES
+        ('Pdv La 70'), ('Pdv Malambo'), ('Mangonizate'), ('Oficina Carnes Santacruz'),
+        ('Pdv Concord'), ('Agropecuaria'), ('Pdv Alameda 1'), ('Pdv San Felipe'),
+        ('Pdv Simon'), ('Pdv La 93'), ('Pdv Alameda 2'), ('Restaurante La 43'),
+        ('Pdv Centro'), ('Salsamentaria'), ('Pdv La 43'), ('Restaurante Malambo')
+       ) AS d(descripcion)
+ WHERE NOT EXISTS (
+        SELECT 1 FROM puntos_referencia_flete
+         WHERE documento = '1081026787' AND codigo_vehiculo = 'LZR889'
+       );
+
+

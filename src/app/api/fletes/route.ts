@@ -18,7 +18,8 @@ export async function GET(req: Request) {
 
     const fletes = await listarFletes(documento, codigoVehiculo.toUpperCase());
     return NextResponse.json({ fletes });
-  } catch {
+  } catch (err) {
+    console.error("GET /api/fletes", err);
     return NextResponse.json({ error: "Error del servidor." }, { status: 500 });
   }
 }
@@ -61,7 +62,8 @@ export async function POST(req: Request) {
       completado: false,
     });
     return NextResponse.json({ flete }, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error("POST /api/fletes", err);
     return NextResponse.json({ error: "Error del servidor." }, { status: 500 });
   }
 }

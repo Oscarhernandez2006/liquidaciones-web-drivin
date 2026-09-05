@@ -74,6 +74,16 @@ function capturarUbicacion(): Promise<{ lat: number; lng: number }> {
   });
 }
 
+/** Extrae el mensaje de error del cuerpo JSON de la respuesta, o usa el mensaje por defecto. */
+async function mensajeError(res: Response, porDefecto: string): Promise<string> {
+  try {
+    const data = (await res.json()) as { error?: string };
+    return data.error || porDefecto;
+  } catch {
+    return porDefecto;
+  }
+}
+
 interface GeoValor {
   oLat: number | null;
   oLng: number | null;
@@ -174,6 +184,10 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
   const [descripcion, setDescripcion] = useState("");
   const [kilos, setKilos] = useState("");
 
+  // Puntos de referencia administrados desde la app (origen/destino).
+  const [puntosOrigen, setPuntosOrigen] = useState<string[]>([]);
+  const [puntosDestino, setPuntosDestino] = useState<string[]>([]);
+
   // Ubicaciones personalizadas creadas por el usuario.
   const [ubicacionesPersonalizadas, setUbicacionesPersonalizadas] = useState<string[]>([]);
 
@@ -211,7 +225,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
     try {
       const params = new URLSearchParams({ documento, codigoVehiculo });
       const res = await fetch(`/api/fletes?${params.toString()}`);
-      if (!res.ok) throw new Error("No se pudieron cargar los fletes.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudieron cargar los fletes."));
       const data: { fletes: Flete[] } = await res.json();
       setFletes(data.fletes);
     } catch (err) {
@@ -223,8 +237,23 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
 
   useEffect(() => {
     void cargarLista();
+    void cargarPuntosReferencia();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function cargarPuntosReferencia() {
+    try {
+      const params = new URLSearchParams({ documento, codigoVehiculo });
+      const res = await fetch(`/api/puntos-referencia?${params.toString()}`);
+      if (!res.ok) return;
+      const data: { puntos: { descripcion: string; aplicaOrigen: boolean; aplicaDestino: boolean }[] } =
+        await res.json();
+      setPuntosOrigen(data.puntos.filter((p) => p.aplicaOrigen).map((p) => p.descripcion));
+      setPuntosDestino(data.puntos.filter((p) => p.aplicaDestino).map((p) => p.descripcion));
+    } catch {
+      // Si falla, se sigue solo con los puntos fijos y personalizados.
+    }
+  }
 
   function limpiarFormulario() {
     setFecha(hoyISO());
@@ -270,7 +299,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
     try {
       const params = new URLSearchParams({ documento, codigoVehiculo });
       const res = await fetch(`/api/fletes/${id}?${params.toString()}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("No se pudo eliminar el flete.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudo eliminar el flete."));
       setFletes((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado.");
@@ -308,7 +337,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           kilos: kilosNum,
         }),
       });
-      if (!res.ok) throw new Error("No se pudo registrar el flete.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudo registrar el flete."));
       const data: { flete: Flete } = await res.json();
       setFletes((prev) => [data.flete, ...prev]);
       limpiarFormulario();
@@ -355,7 +384,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           completado: editando.completado,
         }),
       });
-      if (!res.ok) throw new Error("No se pudo actualizar el flete.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudo actualizar el flete."));
       const data: { flete: Flete } = await res.json();
       setFletes((prev) => prev.map((f) => (f.id === data.flete.id ? data.flete : f)));
       cerrarEdicion();
@@ -408,7 +437,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           completado: geoFlete.completado,
         }),
       });
-      if (!res.ok) throw new Error("No se pudo guardar la ubicación.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudo guardar la ubicación."));
       const data: { flete: Flete } = await res.json();
       const actualizado = data.flete;
       setFletes((prev) => prev.map((f) => (f.id === actualizado.id ? actualizado : f)));
@@ -451,7 +480,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           completado: true,
         }),
       });
-      if (!res.ok) throw new Error("No se pudo marcar como terminado.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudo marcar como terminado."));
       const data: { flete: Flete } = await res.json();
       setFletes((prev) => prev.map((x) => (x.id === data.flete.id ? data.flete : x)));
       setConfirmarFlete(null);
@@ -471,7 +500,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documento, codigoVehiculo }),
       });
-      if (!res.ok) throw new Error("No se pudieron enviar los fletes.");
+      if (!res.ok) throw new Error(await mensajeError(res, "No se pudieron enviar los fletes."));
       const data: { fletes: Flete[] } = await res.json();
       if (data.fletes.length > 0) {
         generarPdfFletesDiarios(data.fletes, nombre, codigoVehiculo);
@@ -566,7 +595,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                 <SelectorBuscable
                   value={origen}
                   onChange={setOrigen}
-                  opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
+                  opciones={[...PUNTOS, ...puntosOrigen, ...ubicacionesPersonalizadas]}
                   placeholder="Selecciona o escribe…"
                   onCrear={crearUbicacion}
                 />
@@ -576,7 +605,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                 <SelectorBuscable
                   value={destino}
                   onChange={setDestino}
-                  opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
+                  opciones={[...PUNTOS, ...puntosDestino, ...ubicacionesPersonalizadas]}
                   placeholder="Selecciona o escribe…"
                   onCrear={crearUbicacion}
                 />
@@ -773,7 +802,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                   <SelectorBuscable
                     value={eOrigen}
                     onChange={setEOrigen}
-                    opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
+                    opciones={[...PUNTOS, ...puntosOrigen, ...ubicacionesPersonalizadas]}
                     placeholder="Selecciona o escribe…"
                     onCrear={crearUbicacion}
                   />
@@ -783,7 +812,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                   <SelectorBuscable
                     value={eDestino}
                     onChange={setEDestino}
-                    opciones={[...PUNTOS, ...ubicacionesPersonalizadas]}
+                    opciones={[...PUNTOS, ...puntosDestino, ...ubicacionesPersonalizadas]}
                     placeholder="Selecciona o escribe…"
                     onCrear={crearUbicacion}
                   />

@@ -55,7 +55,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "No encontrado." }, { status: 404 });
     }
     return NextResponse.json({ flete });
-  } catch {
+  } catch (err) {
+    console.error("PUT /api/fletes/[id]", err);
     return NextResponse.json({ error: "Error del servidor." }, { status: 500 });
   }
 }
@@ -76,7 +77,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
       return NextResponse.json({ error: "No encontrado." }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    console.error("DELETE /api/fletes/[id]", err);
     return NextResponse.json({ error: "Error del servidor." }, { status: 500 });
   }
 }
