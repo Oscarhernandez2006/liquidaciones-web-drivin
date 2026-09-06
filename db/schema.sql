@@ -223,6 +223,10 @@ CREATE TABLE IF NOT EXISTS flete_paradas (
 
 CREATE INDEX IF NOT EXISTS ix_flete_paradas_flete ON flete_paradas (flete_id);
 
+-- Carga por parada: qué se entrega y cuántos kilos en cada punto (el origen es recogida).
+ALTER TABLE flete_paradas ADD COLUMN IF NOT EXISTS carga_descripcion text;
+ALTER TABLE flete_paradas ADD COLUMN IF NOT EXISTS carga_kilos       numeric(12,2);
+
 -- Tiempos y totales del flete (fases B/C: navegación en vivo y analítica).
 ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS iniciado_en   timestamptz;  -- "Iniciar flete"
 ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS finalizado_en timestamptz;  -- flete terminado

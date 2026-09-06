@@ -34,6 +34,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const documento = String(body.documento ?? "").trim();
     const cod = String(body.codigoVehiculo ?? "").trim().toUpperCase();
     const accion = String(body.accion ?? "").trim();
+    const latOpc = Number.isFinite(Number(body.lat)) ? Number(body.lat) : null;
+    const lngOpc = Number.isFinite(Number(body.lng)) ? Number(body.lng) : null;
 
     if (!esDomiciliarioFlete(documento)) {
       return NextResponse.json({ error: "No autorizado." }, { status: 403 });
@@ -41,7 +43,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     switch (accion) {
       case "iniciar":
-        return NextResponse.json(await iniciarFlete(params.id, documento, cod));
+        return NextResponse.json(await iniciarFlete(params.id, documento, cod, latOpc, lngOpc));
 
       case "posicion": {
         const lat = Number(body.lat);
@@ -58,11 +60,11 @@ export async function POST(req: Request, { params }: { params: { id: string } })
         if (!Number.isInteger(orden) || orden < 0) {
           return NextResponse.json({ error: "Parada inválida." }, { status: 400 });
         }
-        return NextResponse.json(await registrarLlegada(params.id, documento, cod, orden));
+        return NextResponse.json(await registrarLlegada(params.id, documento, cod, orden, latOpc, lngOpc));
       }
 
       case "finalizar":
-        return NextResponse.json(await finalizarFlete(params.id, documento, cod));
+        return NextResponse.json(await finalizarFlete(params.id, documento, cod, latOpc, lngOpc));
 
       default:
         return NextResponse.json({ error: "Acción no reconocida." }, { status: 400 });

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import MapaRuta from "./MapaRuta";
+import { IconoPlay, IconoMeta, IconoCheck } from "./Iconos";
+import { colorParada } from "@/lib/colores";
 import type { Flete } from "@/lib/tipos";
 
 interface Parada {
@@ -141,6 +143,18 @@ export default function NavegacionFlete({ documento, codigoVehiculo, flete, onSa
   }
 
   const enCurso = estado?.estadoViaje === "en_curso";
+
+  // Obtiene una lectura fresca del GPS (para fijar la ubicación de origen/parada/destino).
+  function posicionActual(): Promise<{ lat: number; lng: number } | null> {
+    return new Promise((resolve) => {
+      if (typeof navigator === "undefined" || !navigator.geolocation) return resolve(posicion);
+      navigator.geolocation.getCurrentPosition(
+        (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+        () => resolve(posicion),
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    });
+  }
   const finalizado = estado?.estadoViaje === "finalizado";
   const objetivo = estado?.paradaActual ?? null;
   const paradaObjetivo = objetivo != null ? paradas[objetivo] : null;
@@ -179,17 +193,24 @@ export default function NavegacionFlete({ documento, codigoVehiculo, flete, onSa
           {/* Barra de acción principal */}
           {estado?.estadoViaje === "planeado" && (
             <button
-              onClick={() => accion({ accion: "iniciar" })}
+              onClick={async () => {
+                const pos = await posicionActual();
+                accion({ accion: "iniciar", lat: pos?.lat, lng: pos?.lng });
+              }}
               disabled={ocupado}
-              className="w-full rounded-xl bg-emerald-600 py-4 text-base font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-4 text-base font-bold text-white transition hover:bg-emerald-700 disabled:opacity-60"
             >
-              ▶ Iniciar flete
+              <IconoPlay className="h-5 w-5" />
+              Iniciar flete
             </button>
           )}
 
           {enCurso && paradaObjetivo && !esUltima && (
             <button
-              onClick={() => accion({ accion: "llegada", orden: objetivo })}
+              onClick={async () => {
+                const pos = await posicionActual();
+                accion({ accion: "llegada", orden: objetivo, lat: pos?.lat, lng: pos?.lng });
+              }}
               disabled={ocupado}
               className="w-full rounded-xl bg-drivin-indigo py-4 text-base font-bold text-white transition hover:bg-drivin-indigoDark disabled:opacity-60"
             >
@@ -199,17 +220,24 @@ export default function NavegacionFlete({ documento, codigoVehiculo, flete, onSa
 
           {enCurso && esUltima && (
             <button
-              onClick={() => accion({ accion: "finalizar" })}
+              onClick={async () => {
+                const pos = await posicionActual();
+                accion({ accion: "finalizar", lat: pos?.lat, lng: pos?.lng });
+              }}
               disabled={ocupado}
-              className="w-full rounded-xl bg-red-600 py-4 text-base font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 py-4 text-base font-bold text-white transition hover:bg-red-700 disabled:opacity-60"
             >
-              🏁 He llegado al destino — Finalizar flete
+              <IconoMeta className="h-5 w-5" />
+              He llegado al destino — Finalizar flete
             </button>
           )}
 
           {finalizado && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-base font-bold text-emerald-800">✓ Flete completado</p>
+              <p className="flex items-center gap-2 text-base font-bold text-emerald-800">
+                <IconoCheck className="h-5 w-5" />
+                Flete completado
+              </p>
               <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-drivin-muted">Duración</p>
@@ -236,14 +264,14 @@ export default function NavegacionFlete({ documento, codigoVehiculo, flete, onSa
               {paradas.map((p, i) => {
                 const llegado = p.horaLlegada != null;
                 const esObjetivo = enCurso && i === objetivo;
-                const color = p.tipo === "origen" ? "#16A34A" : p.tipo === "destino" ? "#DC2626" : "#6366F1";
+                const color = colorParada(i, paradas.length);
                 return (
                   <li key={p.id} className="flex items-start gap-3">
                     <span
                       className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                      style={{ backgroundColor: llegado ? "#16A34A" : color }}
+                      style={{ backgroundColor: color }}
                     >
-                      {llegado ? "✓" : i === 0 ? "A" : i === paradas.length - 1 ? "B" : i}
+                      {llegado ? <IconoCheck className="h-3 w-3" /> : i === 0 ? "A" : i === paradas.length - 1 ? "B" : i}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">

@@ -7,6 +7,7 @@ import SelectorBuscable from "./SelectorBuscable";
 import ConstructorRuta, { type ParadaRuta, type PuntoCatalogo } from "./ConstructorRuta";
 import NavegacionFlete from "./NavegacionFlete";
 import DetalleRecorrido from "./DetalleRecorrido";
+import { IconoBrujula, IconoPlay, IconoGrafico } from "./Iconos";
 import { generarPdfFletesDiarios } from "@/lib/pdfFletes";
 
 // Puntos disponibles para origen y destino de un flete.
@@ -137,14 +138,14 @@ function CapturaUbicaciones(p: CapturaProps) {
           {cargando === "origen"
             ? "Tomando…"
             : p.oLat != null
-              ? "Origen ✓ (volver a tomar)"
+              ? "Origen listo (volver a tomar)"
               : "Tomar ubicación origen"}
         </button>
         <button type="button" onClick={() => tomar("destino")} disabled={cargando !== null} className={btn}>
           {cargando === "destino"
             ? "Tomando…"
             : p.dLat != null
-              ? "Destino ✓ (volver a tomar)"
+              ? "Destino listo (volver a tomar)"
               : "Tomar ubicación destino"}
         </button>
       </div>
@@ -182,8 +183,6 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
 
   const [fecha, setFecha] = useState(hoyISO());
-  const [descripcion, setDescripcion] = useState("");
-  const [kilos, setKilos] = useState("");
 
   // Puntos de referencia administrados desde la app (origen/destino).
   const [puntosOrigen, setPuntosOrigen] = useState<string[]>([]);
@@ -279,8 +278,6 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
 
   function limpiarFormulario() {
     setFecha(hoyISO());
-    setDescripcion("");
-    setKilos("");
     setParadasRuta([]);
     setResetRuta((k) => k + 1);
   }
@@ -334,19 +331,26 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
     e.preventDefault();
     setError(null);
 
-    if (!fecha || !descripcion.trim()) {
-      setError("Completa la fecha y la descripción.");
+    if (!fecha) {
+      setError("Selecciona la fecha del flete.");
       return;
     }
     if (paradasRuta.length < 2) {
       setError("La ruta necesita al menos un origen y un destino.");
       return;
     }
-    const kilosNum = Number(kilos.replace(",", "."));
-    if (!Number.isFinite(kilosNum) || kilosNum < 0) {
-      setError("Ingresa un valor válido de kilos.");
-      return;
-    }
+
+    // El origen es la recogida; la carga se entrega en cada parada/destino.
+    const entregas = paradasRuta.slice(1);
+    const kilosNum = entregas.reduce((s, p) => s + (p.cargaKilos ?? 0), 0);
+    const descripcionResumen = entregas
+      .map(
+        (p) =>
+          `${p.descripcion}: ${p.cargaDescripcion ?? "carga"}${
+            p.cargaKilos != null ? ` (${p.cargaKilos} kg)` : ""
+          }`
+      )
+      .join("; ");
 
     setGuardando(true);
     try {
@@ -357,7 +361,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           documento,
           codigoVehiculo,
           fecha,
-          descripcion: descripcion.trim(),
+          descripcion: descripcionResumen,
           kilos: kilosNum,
           paradas: paradasRuta.map((p) => ({
             descripcion: p.descripcion,
@@ -367,6 +371,8 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
             barrio: p.barrio,
             ciudad: p.ciudad,
             establecimiento: p.establecimiento,
+            cargaDescripcion: p.cargaDescripcion,
+            cargaKilos: p.cargaKilos,
           })),
         }),
       });
@@ -629,7 +635,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
         </button>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="space-y-6">
         {/* Formulario de registro */}
         <form
           onSubmit={onSubmit}
@@ -649,30 +655,6 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
             </div>
 
             <ConstructorRuta key={resetRuta} puntos={catalogo} onCambio={setParadasRuta} />
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-drivin-ink">Descripción</label>
-              <textarea
-                value={descripcion}
-                onChange={(e) => {
-                  const t = e.target.value;
-                  // Solo la primera letra en mayúscula, el resto en minúscula.
-                  setDescripcion(t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
-                }}
-                rows={3}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-drivin-ink">Kilos enviados</label>
-              <input
-                value={kilos}
-                onChange={(e) => setKilos(normalizarCantidad(e.target.value))}
-                inputMode="decimal"
-                placeholder="0"
-                className={inputClass}
-              />
-            </div>
 
             {error && (
               <p className="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p>
@@ -777,18 +759,24 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                       <button
                         type="button"
                         onClick={() => setNavegando(f)}
-                        className="text-xs font-bold text-emerald-700 hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:underline"
                       >
-                        {f.estadoViaje === "en_curso" ? "🧭 Continuar" : "▶ Iniciar flete"}
+                        {f.estadoViaje === "en_curso" ? (
+                          <IconoBrujula className="h-3.5 w-3.5" />
+                        ) : (
+                          <IconoPlay className="h-3.5 w-3.5" />
+                        )}
+                        {f.estadoViaje === "en_curso" ? "Continuar" : "Iniciar flete"}
                       </button>
                     )}
                     {f.estadoViaje === "finalizado" && (
                       <button
                         type="button"
                         onClick={() => setDetalle(f)}
-                        className="text-xs font-bold text-drivin-indigo hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-drivin-indigo hover:underline"
                       >
-                        📊 Ver detalle
+                        <IconoGrafico className="h-3.5 w-3.5" />
+                        Ver detalle
                       </button>
                     )}
                     <button
@@ -797,13 +785,6 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                       className="text-xs font-semibold text-drivin-indigo hover:underline"
                     >
                       Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => abrirGeo(f)}
-                      className="text-xs font-semibold text-drivin-indigo hover:underline"
-                    >
-                      {f.kilometros != null ? "Ubicación ✓" : "Ubicación"}
                     </button>
                     <button
                       type="button"

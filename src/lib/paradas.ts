@@ -15,6 +15,8 @@ export interface Parada {
   ciudad: string | null;
   establecimiento: string | null;
   kmTramo: number | null;
+  cargaDescripcion: string | null;
+  cargaKilos: number | null;
   horaLlegada: string | null;
   horaSalida: string | null;
 }
@@ -29,6 +31,8 @@ export interface ParadaEntrada {
   ciudad?: string | null;
   establecimiento?: string | null;
   kmTramo?: number | null;
+  cargaDescripcion?: string | null;
+  cargaKilos?: number | null;
 }
 
 function tipoPorPosicion(indice: number, total: number): TipoParada {
@@ -52,6 +56,8 @@ function mapear(r: Record<string, unknown>): Parada {
     ciudad: txt(r.ciudad),
     establecimiento: txt(r.establecimiento),
     kmTramo: num(r.km_tramo),
+    cargaDescripcion: txt(r.carga_descripcion),
+    cargaKilos: num(r.carga_kilos),
     horaLlegada: r.hora_llegada instanceof Date ? r.hora_llegada.toISOString() : txt(r.hora_llegada),
     horaSalida: r.hora_salida instanceof Date ? r.hora_salida.toISOString() : txt(r.hora_salida),
   };
@@ -62,7 +68,7 @@ export async function listarParadas(fleteId: string): Promise<Parada[]> {
   const pool = obtenerPool();
   const { rows } = await pool.query(
     `SELECT id, orden, tipo, descripcion, lat, lng, direccion, barrio, ciudad,
-            establecimiento, km_tramo, hora_llegada, hora_salida
+            establecimiento, km_tramo, carga_descripcion, carga_kilos, hora_llegada, hora_salida
        FROM flete_paradas
       WHERE flete_id = $1
       ORDER BY orden`,
@@ -86,8 +92,8 @@ export async function guardarParadas(fleteId: string, paradas: ParadaEntrada[]):
       const p = paradas[i];
       await client.query(
         `INSERT INTO flete_paradas
-            (flete_id, orden, tipo, descripcion, lat, lng, direccion, barrio, ciudad, establecimiento, km_tramo)
-         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+            (flete_id, orden, tipo, descripcion, lat, lng, direccion, barrio, ciudad, establecimiento, km_tramo, carga_descripcion, carga_kilos)
+         VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
         [
           fleteId,
           i,
@@ -100,6 +106,8 @@ export async function guardarParadas(fleteId: string, paradas: ParadaEntrada[]):
           p.ciudad ?? null,
           p.establecimiento ?? null,
           p.kmTramo ?? null,
+          p.cargaDescripcion ?? null,
+          p.cargaKilos ?? null,
         ]
       );
     }

@@ -14,6 +14,9 @@ export interface ParadaInput {
   barrio?: string | null;
   ciudad?: string | null;
   establecimiento?: string | null;
+  // Carga entregada en esta parada (el origen es recogida).
+  cargaDescripcion?: string | null;
+  cargaKilos?: number | null;
 }
 
 /**
@@ -81,6 +84,8 @@ export async function crearFleteConParadas(
     ciudad: p.ciudad,
     establecimiento: p.establecimiento,
     kmTramo: i === 0 ? null : ruta.tramos[i - 1] ?? null,
+    cargaDescripcion: p.cargaDescripcion ?? null,
+    cargaKilos: p.cargaKilos ?? null,
   }));
   const paradas = await guardarParadas(fleteBase.id, paradasEntrada);
 
@@ -106,6 +111,8 @@ export async function crearFleteConParadas(
       completado: false,
     })) ?? fleteBase;
   await actualizarMetaFlete(fleteBase.id, paradas.length);
+  // El flete se devolvió antes de guardar el conteo: lo reflejamos en la respuesta.
+  flete.paradasCount = paradas.length;
 
   // 6) Enriquecer el catálogo de puntos de referencia (best-effort).
   try {

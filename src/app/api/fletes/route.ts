@@ -57,6 +57,8 @@ export async function POST(req: Request) {
           barrio: o.barrio != null ? String(o.barrio) : null,
           ciudad: o.ciudad != null ? String(o.ciudad) : null,
           establecimiento: o.establecimiento != null ? String(o.establecimiento) : null,
+          cargaDescripcion: o.cargaDescripcion != null ? String(o.cargaDescripcion) : null,
+          cargaKilos: numOpcional(o.cargaKilos),
         };
       });
 

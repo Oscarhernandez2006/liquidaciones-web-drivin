@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef } from "react";
+import { colorParada } from "@/lib/colores";
 
 interface PuntoMapa {
   lat: number | null;
@@ -78,15 +79,16 @@ export default function MapaRuta({ paradas, geometria, posicion, alto = "h-56" }
         const grupo = L.layerGroup().addTo(map);
         capa.current = grupo;
 
-        const conCoord = paradas.filter((p) => p.lat != null && p.lng != null) as { lat: number; lng: number; descripcion: string }[];
-        conCoord.forEach((p, i) => {
-          const color = i === 0 ? "#16A34A" : i === conCoord.length - 1 && conCoord.length > 1 ? "#DC2626" : "#6366F1";
+        const total = paradas.length;
+        paradas.forEach((p, i) => {
+          if (p.lat == null || p.lng == null) return;
+          const color = colorParada(i, total);
           L.circleMarker([p.lat, p.lng], { radius: 8, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 })
             .addTo(grupo)
             .bindPopup(p.descripcion);
         });
 
-        const puntos = conCoord.map((p) => [p.lat, p.lng]) as [number, number][];
+        const puntos = paradas.filter((p) => p.lat != null && p.lng != null).map((p) => [p.lat, p.lng]) as [number, number][];
         if (geometria) {
           const ruta = decodePolyline(geometria);
           L.polyline(ruta, { color: "#2563EB", weight: 4, opacity: 0.85 }).addTo(grupo);

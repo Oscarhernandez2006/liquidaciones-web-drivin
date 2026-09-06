@@ -1,5 +1,7 @@
 import { obtenerPool } from "@/lib/db";
 import { listarParadas, type Parada } from "@/lib/paradas";
+import { reverseGeocode, rutaOSRMMulti } from "@/lib/geo";
+import { enriquecerPuntoReferencia } from "@/lib/puntosReferencia";
 
 /** Estado de navegación de un flete (para la pantalla del conductor y la oficina). */
 export interface EstadoSeguimiento {
@@ -64,8 +66,29 @@ export async function obtenerSeguimiento(id: string): Promise<Seguimiento> {
   return { estado, paradas };
 }
 
-/** Inicia el viaje: marca en curso, sella la salida del origen y apunta a la parada 1. */
-export async function iniciarFlete(id: string, documento: string, codigoVehiculo: string): Promise<Seguimiento> {
+/** Fija la ubicación real de una parada (capturada por GPS) y resuelve su dirección. */
+async function fijarParada(fleteId: string, orden: number, lat: number, lng: number): Promise<void> {
+  const pool = obtenerPool();
+  const geo = await reverseGeocode(lat, lng);
+  await pool.query(
+    `UPDATE flete_paradas
+        SET lat = $3, lng = $4, direccion = $5, barrio = $6, ciudad = $7, establecimiento = $8
+      WHERE flete_id = $1 AND orden = $2`,
+    [fleteId, orden, lat, lng, geo.direccion, geo.barrio, geo.ciudad, geo.establecimiento]
+  );
+}
+
+/**
+ * Inicia el viaje: marca en curso, sella la salida del origen y apunta a la parada 1.
+ * Si viene la posición del conductor, se toma como ubicación real del origen.
+ */
+export async function iniciarFlete(
+  id: string,
+  documento: string,
+  codigoVehiculo: string,
+  lat?: number | null,
+  lng?: number | null
+): Promise<Seguimiento> {
   const pool = obtenerPool();
   await pool.query(
     `UPDATE fletes_registrados
@@ -73,10 +96,15 @@ export async function iniciarFlete(id: string, documento: string, codigoVehiculo
       WHERE id = $1 AND documento = $2 AND codigo_vehiculo = $3 AND estado_viaje <> 'finalizado'`,
     [id, documento, codigoVehiculo]
   );
-  await pool.query(
-    `UPDATE flete_paradas SET hora_salida = now() WHERE flete_id = $1 AND orden = 0`,
-    [id]
-  );
+  await pool.query(`UPDATE flete_paradas SET hora_salida = now() WHERE flete_id = $1 AND orden = 0`, [id]);
+
+  if (lat != null && lng != null) {
+    await fijarParada(id, 0, lat, lng);
+    await pool.query(
+      `UPDATE fletes_registrados SET origen_lat = $2, origen_lng = $3, pos_lat = $2, pos_lng = $3, pos_en = now() WHERE id = $1`,
+      [id, lat, lng]
+    );
+  }
   return obtenerSeguimiento(id);
 }
 
@@ -97,19 +125,27 @@ export async function guardarPosicion(
   );
 }
 
-/** Registra la llegada a una parada intermedia y avanza a la siguiente. */
+/** Registra la llegada a una parada y avanza a la siguiente. La posición del conductor fija esa parada. */
 export async function registrarLlegada(
   id: string,
   documento: string,
   codigoVehiculo: string,
-  orden: number
+  orden: number,
+  lat?: number | null,
+  lng?: number | null
 ): Promise<Seguimiento> {
   const pool = obtenerPool();
   await pool.query(
-    `UPDATE flete_paradas SET hora_llegada = COALESCE(hora_llegada, now())
-      WHERE flete_id = $1 AND orden = $2`,
+    `UPDATE flete_paradas SET hora_llegada = COALESCE(hora_llegada, now()) WHERE flete_id = $1 AND orden = $2`,
     [id, orden]
   );
+  if (lat != null && lng != null) {
+    await fijarParada(id, orden, lat, lng);
+    await pool.query(
+      `UPDATE fletes_registrados SET pos_lat = $2, pos_lng = $3, pos_en = now() WHERE id = $1`,
+      [id, lat, lng]
+    );
+  }
   await pool.query(
     `UPDATE fletes_registrados SET parada_actual = $4
       WHERE id = $1 AND documento = $2 AND codigo_vehiculo = $3 AND estado_viaje = 'en_curso'`,
@@ -118,14 +154,33 @@ export async function registrarLlegada(
   return obtenerSeguimiento(id);
 }
 
-/** Finaliza el viaje: sella la llegada al destino, la duración total y marca terminado. */
-export async function finalizarFlete(id: string, documento: string, codigoVehiculo: string): Promise<Seguimiento> {
+/**
+ * Finaliza el viaje: sella la llegada al destino, la duración total, y recalcula la
+ * ruta real por carretera (OSRM) con las coordenadas capturadas durante el recorrido.
+ */
+export async function finalizarFlete(
+  id: string,
+  documento: string,
+  codigoVehiculo: string,
+  lat?: number | null,
+  lng?: number | null
+): Promise<Seguimiento> {
   const pool = obtenerPool();
+  const ultima = (
+    await pool.query(`SELECT MAX(orden) AS m FROM flete_paradas WHERE flete_id = $1`, [id])
+  ).rows[0]?.m as number | null;
+
   await pool.query(
-    `UPDATE flete_paradas SET hora_llegada = COALESCE(hora_llegada, now())
-      WHERE flete_id = $1 AND orden = (SELECT MAX(orden) FROM flete_paradas WHERE flete_id = $1)`,
-    [id]
+    `UPDATE flete_paradas SET hora_llegada = COALESCE(hora_llegada, now()) WHERE flete_id = $1 AND orden = $2`,
+    [id, ultima]
   );
+  if (lat != null && lng != null && ultima != null) {
+    await fijarParada(id, ultima, lat, lng);
+    await pool.query(
+      `UPDATE fletes_registrados SET destino_lat = $2, destino_lng = $3, pos_lat = $2, pos_lng = $3, pos_en = now() WHERE id = $1`,
+      [id, lat, lng]
+    );
+  }
   await pool.query(
     `UPDATE fletes_registrados
         SET estado_viaje = 'finalizado', finalizado_en = now(), completado = true,
@@ -133,5 +188,44 @@ export async function finalizarFlete(id: string, documento: string, codigoVehicu
       WHERE id = $1 AND documento = $2 AND codigo_vehiculo = $3`,
     [id, documento, codigoVehiculo]
   );
+  await recalcularRuta(id, documento, codigoVehiculo);
   return obtenerSeguimiento(id);
+}
+
+/** Recalcula la ruta por carretera y los km por tramo con las coordenadas capturadas. */
+async function recalcularRuta(fleteId: string, documento: string, codigoVehiculo: string): Promise<void> {
+  const paradas = await listarParadas(fleteId);
+  const conCoord = paradas.filter((p) => p.lat != null && p.lng != null);
+  if (conCoord.length < 2) return;
+
+  const ruta = await rutaOSRMMulti(conCoord.map((p) => ({ lat: p.lat as number, lng: p.lng as number })));
+  const pool = obtenerPool();
+  if (ruta.kmTotal != null) {
+    await pool.query(`UPDATE fletes_registrados SET kilometros = $2, ruta_geometria = $3 WHERE id = $1`, [
+      fleteId,
+      ruta.kmTotal,
+      ruta.geometria,
+    ]);
+    for (let i = 1; i < conCoord.length; i++) {
+      await pool.query(`UPDATE flete_paradas SET km_tramo = $3 WHERE flete_id = $1 AND orden = $2`, [
+        fleteId,
+        conCoord[i].orden,
+        ruta.tramos[i - 1] ?? null,
+      ]);
+    }
+  }
+  try {
+    for (const p of conCoord) {
+      await enriquecerPuntoReferencia(documento, codigoVehiculo, p.descripcion, {
+        lat: p.lat as number,
+        lng: p.lng as number,
+        direccion: p.direccion,
+        barrio: p.barrio,
+        ciudad: p.ciudad,
+        establecimiento: p.establecimiento,
+      });
+    }
+  } catch (e) {
+    console.error("enriquecer puntos (finalizar)", e);
+  }
 }
