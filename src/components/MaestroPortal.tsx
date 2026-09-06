@@ -228,7 +228,7 @@ export default function MaestroPortal() {
         codigoVehiculo={DOMICILIARIO_FLETE.codigoVehiculo}
         nombre={DOMICILIARIO_FLETE.nombre}
         onVolver={() => setVistaFletes(false)}
-        tituloClaro={false}
+        tituloClaro={true}
       />
     );
   }
@@ -237,10 +237,10 @@ export default function MaestroPortal() {
     <div className="w-full">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-drivin-ink">
+          <h2 className="text-lg font-bold text-white">
             Modo maestro{nombreMaestro ? ` · ${nombreMaestro}` : ""}
           </h2>
-          <p className="text-sm text-drivin-muted">
+          <p className="text-sm text-white/70">
             Selecciona un domiciliario para ver sus liquidaciones publicadas.
           </p>
         </div>

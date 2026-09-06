@@ -84,6 +84,17 @@ export interface Flete {
   destinoLat: number | null;
   destinoLng: number | null;
   kilometros: number | null;
+  origenDireccion: string | null;
+  origenBarrio: string | null;
+  origenCiudad: string | null;
+  origenEstablecimiento: string | null;
+  destinoDireccion: string | null;
+  destinoBarrio: string | null;
+  destinoCiudad: string | null;
+  destinoEstablecimiento: string | null;
+  rutaGeometria: string | null;
+  estadoViaje: "planeado" | "en_curso" | "finalizado";
+  paradasCount: number | null;
   completado: boolean;
   creadoEn: string;
 }
@@ -100,5 +111,14 @@ export interface FleteEntrada {
   destinoLat: number | null;
   destinoLng: number | null;
   kilometros: number | null;
+  origenDireccion?: string | null;
+  origenBarrio?: string | null;
+  origenCiudad?: string | null;
+  origenEstablecimiento?: string | null;
+  destinoDireccion?: string | null;
+  destinoBarrio?: string | null;
+  destinoCiudad?: string | null;
+  destinoEstablecimiento?: string | null;
+  rutaGeometria?: string | null;
   completado: boolean;
 }

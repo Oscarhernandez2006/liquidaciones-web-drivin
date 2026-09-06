@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import type { Flete } from "@/lib/tipos";
 import { numero } from "@/lib/formato";
 import SelectorBuscable from "./SelectorBuscable";
+import ConstructorRuta, { type ParadaRuta, type PuntoCatalogo } from "./ConstructorRuta";
+import NavegacionFlete from "./NavegacionFlete";
+import DetalleRecorrido from "./DetalleRecorrido";
 import { generarPdfFletesDiarios } from "@/lib/pdfFletes";
 
 // Puntos disponibles para origen y destino de un flete.
@@ -179,14 +182,22 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
 
   const [fecha, setFecha] = useState(hoyISO());
-  const [origen, setOrigen] = useState("");
-  const [destino, setDestino] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [kilos, setKilos] = useState("");
 
   // Puntos de referencia administrados desde la app (origen/destino).
   const [puntosOrigen, setPuntosOrigen] = useState<string[]>([]);
   const [puntosDestino, setPuntosDestino] = useState<string[]>([]);
+
+  // Catálogo completo (con coordenadas) para el constructor de ruta.
+  const [catalogo, setCatalogo] = useState<PuntoCatalogo[]>([]);
+  const [paradasRuta, setParadasRuta] = useState<ParadaRuta[]>([]);
+  const [resetRuta, setResetRuta] = useState(0);
+
+  // Navegación en vivo del flete seleccionado.
+  const [navegando, setNavegando] = useState<Flete | null>(null);
+  // Detalle/analítica de un flete finalizado.
+  const [detalle, setDetalle] = useState<Flete | null>(null);
 
   // Ubicaciones personalizadas creadas por el usuario.
   const [ubicacionesPersonalizadas, setUbicacionesPersonalizadas] = useState<string[]>([]);
@@ -246,10 +257,21 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
       const params = new URLSearchParams({ documento, codigoVehiculo });
       const res = await fetch(`/api/puntos-referencia?${params.toString()}`);
       if (!res.ok) return;
-      const data: { puntos: { descripcion: string; aplicaOrigen: boolean; aplicaDestino: boolean }[] } =
+      const data: { puntos: { descripcion: string; aplicaOrigen: boolean; aplicaDestino: boolean; lat: number | null; lng: number | null; direccion: string | null; barrio: string | null; ciudad: string | null; establecimiento: string | null }[] } =
         await res.json();
       setPuntosOrigen(data.puntos.filter((p) => p.aplicaOrigen).map((p) => p.descripcion));
       setPuntosDestino(data.puntos.filter((p) => p.aplicaDestino).map((p) => p.descripcion));
+      setCatalogo(
+        data.puntos.map((p) => ({
+          descripcion: p.descripcion,
+          lat: p.lat,
+          lng: p.lng,
+          direccion: p.direccion,
+          barrio: p.barrio,
+          ciudad: p.ciudad,
+          establecimiento: p.establecimiento,
+        }))
+      );
     } catch {
       // Si falla, se sigue solo con los puntos fijos y personalizados.
     }
@@ -257,10 +279,10 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
 
   function limpiarFormulario() {
     setFecha(hoyISO());
-    setOrigen("");
-    setDestino("");
     setDescripcion("");
     setKilos("");
+    setParadasRuta([]);
+    setResetRuta((k) => k + 1);
   }
 
   function crearUbicacion(nombreUbicacion: string) {
@@ -312,8 +334,12 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
     e.preventDefault();
     setError(null);
 
-    if (!fecha || !origen.trim() || !destino.trim() || !descripcion.trim()) {
-      setError("Completa fecha, origen, destino y descripción.");
+    if (!fecha || !descripcion.trim()) {
+      setError("Completa la fecha y la descripción.");
+      return;
+    }
+    if (paradasRuta.length < 2) {
+      setError("La ruta necesita al menos un origen y un destino.");
       return;
     }
     const kilosNum = Number(kilos.replace(",", "."));
@@ -331,10 +357,17 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           documento,
           codigoVehiculo,
           fecha,
-          origen: origen.trim(),
-          destino: destino.trim(),
           descripcion: descripcion.trim(),
           kilos: kilosNum,
+          paradas: paradasRuta.map((p) => ({
+            descripcion: p.descripcion,
+            lat: p.lat,
+            lng: p.lng,
+            direccion: p.direccion,
+            barrio: p.barrio,
+            ciudad: p.ciudad,
+            establecimiento: p.establecimiento,
+          })),
         }),
       });
       if (!res.ok) throw new Error(await mensajeError(res, "No se pudo registrar el flete."));
@@ -435,6 +468,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
           destinoLng: gDLng,
           kilometros,
           completado: geoFlete.completado,
+          geocodificar: true,
         }),
       });
       if (!res.ok) throw new Error(await mensajeError(res, "No se pudo guardar la ubicación."));
@@ -552,6 +586,30 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
   const completados = fletes.filter((f) => f.completado);
   const incompletos = fletes.filter((f) => !f.completado);
 
+  if (navegando) {
+    return (
+      <div className="mx-auto max-w-4xl">
+        <NavegacionFlete
+          documento={documento}
+          codigoVehiculo={codigoVehiculo}
+          flete={navegando}
+          onSalir={() => {
+            setNavegando(null);
+            void cargarLista();
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (detalle) {
+    return (
+      <div className="mx-auto max-w-4xl">
+        <DetalleRecorrido documento={documento} flete={detalle} onSalir={() => setDetalle(null)} />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
@@ -589,28 +647,9 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                 className={inputClass}
               />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-drivin-ink">Origen</label>
-                <SelectorBuscable
-                  value={origen}
-                  onChange={setOrigen}
-                  opciones={[...PUNTOS, ...puntosOrigen, ...ubicacionesPersonalizadas]}
-                  placeholder="Selecciona o escribe…"
-                  onCrear={crearUbicacion}
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-semibold text-drivin-ink">Destino</label>
-                <SelectorBuscable
-                  value={destino}
-                  onChange={setDestino}
-                  opciones={[...PUNTOS, ...puntosDestino, ...ubicacionesPersonalizadas]}
-                  placeholder="Selecciona o escribe…"
-                  onCrear={crearUbicacion}
-                />
-              </div>
-            </div>
+
+            <ConstructorRuta key={resetRuta} puntos={catalogo} onCambio={setParadasRuta} />
+
             <div>
               <label className="mb-1 block text-sm font-semibold text-drivin-ink">Descripción</label>
               <textarea
@@ -734,6 +773,24 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
                     )}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-3">
+                    {f.paradasCount != null && f.paradasCount >= 2 && f.estadoViaje !== "finalizado" && (
+                      <button
+                        type="button"
+                        onClick={() => setNavegando(f)}
+                        className="text-xs font-bold text-emerald-700 hover:underline"
+                      >
+                        {f.estadoViaje === "en_curso" ? "🧭 Continuar" : "▶ Iniciar flete"}
+                      </button>
+                    )}
+                    {f.estadoViaje === "finalizado" && (
+                      <button
+                        type="button"
+                        onClick={() => setDetalle(f)}
+                        className="text-xs font-bold text-drivin-indigo hover:underline"
+                      >
+                        📊 Ver detalle
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => abrirEdicion(f)}

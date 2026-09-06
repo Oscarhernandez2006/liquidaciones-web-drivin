@@ -9,14 +9,14 @@ export default function MaestroPage() {
     <main className="min-h-screen">
       <Header />
 
-      <div className="bg-drivin-dark pb-16 pt-8 text-center">
+      <div className="bg-drivin-dark pb-24 pt-8 text-center">
         <h1 className="px-5 text-2xl font-extrabold text-white sm:text-3xl">Acceso maestro</h1>
         <p className="mx-auto mt-2 max-w-xl px-5 text-sm text-white/70">
           Consulta la liquidación de cualquier domiciliario publicado.
         </p>
       </div>
 
-      <div className="mx-auto -mt-10 max-w-5xl px-5 pb-16">
+      <div className="mx-auto -mt-16 max-w-5xl px-5 pb-16">
         <MaestroPortal />
       </div>
     </main>

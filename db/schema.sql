@@ -172,4 +172,70 @@ SELECT '1081026787', 'LZR889', d.descripcion, true, true
          WHERE documento = '1081026787' AND codigo_vehiculo = 'LZR889'
        );
 
+-- ============================================================================
+--  Geolocalización enriquecida: dirección, barrio, ciudad y establecimiento
+--  (reverse geocoding con Nominatim/OpenStreetMap) y geometría de la ruta por
+--  carretera (OSRM). Se calcula en el portal al guardar la ubicación del flete.
+-- ============================================================================
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS origen_direccion        text;
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS origen_barrio           varchar(150);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS origen_ciudad           varchar(150);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS origen_establecimiento  varchar(200);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS destino_direccion       text;
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS destino_barrio          varchar(150);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS destino_ciudad          varchar(150);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS destino_establecimiento varchar(200);
+-- Polyline (formato encoded polyline de OSRM) de la ruta origen→destino, para dibujarla en el mapa.
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS ruta_geometria          text;
+
+-- La tabla de puntos de referencia también guarda la ubicación y dirección resuelta.
+ALTER TABLE puntos_referencia_flete ADD COLUMN IF NOT EXISTS lat             numeric(9,6);
+ALTER TABLE puntos_referencia_flete ADD COLUMN IF NOT EXISTS lng             numeric(9,6);
+ALTER TABLE puntos_referencia_flete ADD COLUMN IF NOT EXISTS direccion       text;
+ALTER TABLE puntos_referencia_flete ADD COLUMN IF NOT EXISTS barrio          varchar(150);
+ALTER TABLE puntos_referencia_flete ADD COLUMN IF NOT EXISTS ciudad          varchar(150);
+ALTER TABLE puntos_referencia_flete ADD COLUMN IF NOT EXISTS establecimiento varchar(200);
+
+-- ============================================================================
+--  Paradas del flete: un flete es una ruta ordenada de puntos (origen →
+--  intermedios → destino). Sustituye al par origen/destino fijo. El par de
+--  columnas origen/destino de fletes_registrados se mantiene (primera/última
+--  parada) por compatibilidad con la app de liquidación.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS flete_paradas (
+    id               uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+    flete_id         uuid          NOT NULL REFERENCES fletes_registrados(id) ON DELETE CASCADE,
+    orden            integer       NOT NULL,               -- 0 = origen, N = destino
+    tipo             varchar(12)   NOT NULL DEFAULT 'intermedio',  -- origen | intermedio | destino
+    descripcion      varchar(200)  NOT NULL,
+    lat              numeric(9,6),
+    lng              numeric(9,6),
+    direccion        text,
+    barrio           varchar(150),
+    ciudad           varchar(150),
+    establecimiento  varchar(200),
+    km_tramo         numeric(10,2),   -- km del tramo anterior a esta parada (por carretera)
+    hora_llegada     timestamptz,     -- fase B: seguimiento en vivo
+    hora_salida      timestamptz,
+    creado_en        timestamptz   NOT NULL DEFAULT now(),
+    CONSTRAINT ux_flete_paradas_orden UNIQUE (flete_id, orden)
+);
+
+CREATE INDEX IF NOT EXISTS ix_flete_paradas_flete ON flete_paradas (flete_id);
+
+-- Tiempos y totales del flete (fases B/C: navegación en vivo y analítica).
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS iniciado_en   timestamptz;  -- "Iniciar flete"
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS finalizado_en timestamptz;  -- flete terminado
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS duracion_seg  integer;      -- duración total en segundos
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS paradas_count integer;      -- número de paradas de la ruta
+
+-- Navegación en vivo (fase B): estado del viaje, parada objetivo y última posición conocida.
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS estado_viaje  varchar(12) NOT NULL DEFAULT 'planeado'; -- planeado | en_curso | finalizado
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS parada_actual integer;      -- índice de la próxima parada a alcanzar
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS pos_lat       numeric(9,6); -- última posición del conductor
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS pos_lng       numeric(9,6);
+ALTER TABLE fletes_registrados ADD COLUMN IF NOT EXISTS pos_en        timestamptz;
+
+-- Índice para que la oficina liste rápidamente los fletes en curso.
+CREATE INDEX IF NOT EXISTS ix_fletes_estado_viaje ON fletes_registrados (estado_viaje);
 
