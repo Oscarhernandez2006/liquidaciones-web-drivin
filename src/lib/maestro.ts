@@ -6,6 +6,7 @@ export interface MaestroInfo {
   usuario: string;
   nombre: string;
   rol: string;
+  activo?: boolean;
 }
 
 /**
@@ -72,7 +73,128 @@ export async function obtenerMaestroPorUsuario(usuario: string): Promise<Maestro
     usuario: String(u.usuario),
     nombre: String(u.nombre ?? u.usuario),
     rol: String(u.rol ?? ""),
+    activo: Boolean(u.activo),
   };
+}
+
+export async function listarRolesMaestro(): Promise<string[]> {
+  const pool = obtenerPool();
+  const { rows } = await pool.query(
+    `SELECT DISTINCT "Rol" AS rol
+       FROM usuarios
+      WHERE COALESCE("Rol", '') <> ''
+      ORDER BY "Rol"`
+  );
+  const roles = rows.map((r) => String(r.rol ?? "").trim()).filter(Boolean);
+  if (!roles.includes("maestro")) roles.push("maestro");
+  return Array.from(new Set(roles));
+}
+
+export async function listarMaestrosProvisioning(): Promise<
+  Array<{ cedula: string; nombre: string; email: null; rol: string; activo: boolean; permisos: string[] }>
+> {
+  const pool = obtenerPool();
+  const { rows } = await pool.query(
+    `SELECT "NombreUsuario" AS usuario,
+            "NombreCompleto" AS nombre,
+            "Rol" AS rol,
+            "Activo" AS activo
+       FROM usuarios
+      ORDER BY "NombreCompleto" NULLS LAST, "NombreUsuario"`
+  );
+
+  return rows.map((r) => ({
+    cedula: String(r.usuario ?? "").trim(),
+    nombre: String(r.nombre ?? r.usuario ?? "").trim(),
+    email: null,
+    rol: String(r.rol ?? ""),
+    activo: Boolean(r.activo),
+    permisos: [],
+  }));
+}
+
+export async function obtenerMaestroProvisioning(cedula: string) {
+  const user = await obtenerMaestroPorUsuario(String(cedula || "").trim());
+  if (!user) return null;
+  return {
+    cedula: user.usuario,
+    nombre: user.nombre,
+    email: null,
+    rol: user.rol,
+    activo: Boolean(user.activo ?? true),
+    permisos: [] as string[],
+  };
+}
+
+export async function upsertMaestroProvisioning(input: {
+  cedula?: string;
+  email?: string;
+  nombre?: string;
+  rol?: string;
+  activo?: boolean;
+  password?: string;
+}) {
+  const cedula = String(input.cedula ?? "").trim();
+  const email = String(input.email ?? "").trim().toLowerCase();
+  const nombre = String(input.nombre ?? "").trim();
+  if (!cedula && !email) throw new Error("Se requiere cédula o email");
+
+  const usuario = cedula || email;
+  const activo = input.activo ?? true;
+  const rol = String(input.rol ?? "").trim() || "maestro";
+  const pool = obtenerPool();
+
+  const existing = await obtenerMaestroPorUsuario(usuario);
+  const hash = input.password ? await bcrypt.hash(input.password, 10) : null;
+
+  if (existing) {
+    await pool.query(
+      `UPDATE usuarios
+          SET "NombreCompleto" = $1,
+              "Rol" = $2,
+              "Activo" = $3,
+              "HashContrasena" = COALESCE($4, "HashContrasena")
+        WHERE "NombreUsuario" = $5`,
+      [nombre || existing.nombre || usuario, rol, activo, hash, usuario]
+    );
+    return { ok: true, action: "updated", id: usuario };
+  }
+
+  await pool.query(
+    `INSERT INTO usuarios ("NombreUsuario", "HashContrasena", "NombreCompleto", "Rol", "Activo")
+     VALUES ($1, $2, $3, $4, $5)`,
+    [usuario, hash ?? (await bcrypt.hash("Admin2024*", 10)), nombre || usuario, rol, activo]
+  );
+  return { ok: true, action: "created", id: usuario };
+}
+
+export async function setEstadoMaestroProvisioning(cedula: string, activo: boolean) {
+  const pool = obtenerPool();
+  const res = await pool.query(
+    `UPDATE usuarios SET "Activo" = $1 WHERE "NombreUsuario" = $2 RETURNING "NombreUsuario"`,
+    [activo, String(cedula || "").trim()]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export async function setPasswordMaestroProvisioning(cedula: string, password: string) {
+  const pool = obtenerPool();
+  const hash = await bcrypt.hash(password, 10);
+  const res = await pool.query(
+    `UPDATE usuarios SET "HashContrasena" = $1 WHERE "NombreUsuario" = $2 RETURNING "NombreUsuario"`,
+    [hash, String(cedula || "").trim()]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export async function setPermisosMaestroProvisioning(cedula: string, rol?: string) {
+  if (!rol) return true;
+  const pool = obtenerPool();
+  const res = await pool.query(
+    `UPDATE usuarios SET "Rol" = $1 WHERE "NombreUsuario" = $2 RETURNING "NombreUsuario"`,
+    [String(rol).trim() || "maestro", String(cedula || "").trim()]
+  );
+  return (res.rowCount ?? 0) > 0;
 }
 
 /** Domiciliario con al menos una liquidación publicada. */
