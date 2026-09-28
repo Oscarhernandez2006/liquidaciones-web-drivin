@@ -48,6 +48,33 @@ export async function autenticarMaestro(
   };
 }
 
+/** Busca un usuario maestro activo por identificador (usuario/cédula). */
+export async function obtenerMaestroPorUsuario(usuario: string): Promise<MaestroInfo | null> {
+  const pool = obtenerPool();
+
+  const { rows } = await pool.query(
+    `SELECT "NombreUsuario" AS usuario,
+            "NombreCompleto" AS nombre,
+            "Rol"           AS rol,
+            "Activo"        AS activo
+       FROM usuarios
+      WHERE "NombreUsuario" = $1
+      LIMIT 1`,
+    [usuario]
+  );
+
+  if (rows.length === 0) return null;
+
+  const u = rows[0];
+  if (u.activo === false) return null;
+
+  return {
+    usuario: String(u.usuario),
+    nombre: String(u.nombre ?? u.usuario),
+    rol: String(u.rol ?? ""),
+  };
+}
+
 /** Domiciliario con al menos una liquidación publicada. */
 export interface DomiciliarioPublicado {
   documento: string;
