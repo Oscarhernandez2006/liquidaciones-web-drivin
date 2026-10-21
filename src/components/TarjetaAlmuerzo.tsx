@@ -45,6 +45,7 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
   const [horaInicio, setHoraInicio] = useState("12:00");
   const [nota, setNota] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [confirmandoDisponible, setConfirmandoDisponible] = useState(false);
   const [ahora, setAhora] = useState(() => Date.now());
 
   const cargar = useCallback(async () => {
@@ -97,20 +98,21 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
     }
   }
 
-  async function cancelar(id: string) {
+  async function disponible(id: string) {
     setError(null);
+    setConfirmandoDisponible(true);
     try {
-      const res = await fetch(`/api/almuerzos/${encodeURIComponent(id)}/cancelar`, {
+      const res = await fetch(`/api/almuerzos/${encodeURIComponent(id)}/disponible`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documento }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "No se pudo cancelar.");
+      if (!res.ok) throw new Error(data.error ?? "No se pudo confirmar tu disponibilidad.");
       await cargar();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudo cancelar.");
-    }
+      setError(err instanceof Error ? err.message : "No se pudo confirmar tu disponibilidad.");
+    } finally { setConfirmandoDisponible(false); }
   }
 
   const hoy = hoyBogota();
@@ -152,7 +154,7 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
       {actual && (
         <div className={`mt-4 rounded-lg p-4 ring-1 ${enCurso ? "bg-orange-50 text-orange-800 ring-orange-200" : COLOR[actual.estado]}`}>
           <p className="text-sm font-bold">
-            {enCurso
+            {actual.disponible_en ? "Disponible" : enCurso
               ? `En almuerzo · termina a las ${hora(actual.fin)}`
               : ETIQUETA[actual.estado]}
           </p>
@@ -164,16 +166,19 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
               Pediste {actual.hora_solicitada} – {sumarHora(actual.hora_solicitada)}; Despacho lo movió a este horario.
             </p>
           )}
+          {actual.motivo_reprogramacion && <p className="mt-3 whitespace-pre-wrap break-words rounded-md bg-white/70 px-3 py-2 text-sm"><b>Mensaje de {actual.resuelto_por_nombre || "Despacho"}:</b> {actual.motivo_reprogramacion}</p>}
           <p className="mt-1 text-xs">
             {actual.punto_nombre ?? ""}
             {actual.resuelto_por_nombre ? ` · Respondió ${actual.resuelto_por_nombre}` : ""}
           </p>
-          {actual.estado === "pendiente" && (
+          {actual.disponible_en && <p className="mt-2 text-sm font-semibold">Confirmaste tu regreso a las {hora(actual.disponible_en)}</p>}
+          {!actual.disponible_en && ["aprobada", "reprogramada", "terminada"].includes(actual.estado) && new Date(actual.inicio).getTime() <= ahora && (
             <button
-              onClick={() => void cancelar(actual.id)}
-              className="mt-3 rounded-lg border border-current px-3 py-1.5 text-xs font-semibold"
+              onClick={() => void disponible(actual.id)}
+              disabled={confirmandoDisponible}
+              className="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >
-              Cancelar solicitud
+              {confirmandoDisponible ? "Confirmando…" : "Ya estoy disponible"}
             </button>
           )}
         </div>
@@ -226,7 +231,7 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
               onClick={() => setFormAbierto(false)}
               className="rounded-lg border border-drivin-border px-4 py-2 text-sm font-semibold text-drivin-ink"
             >
-              Cancelar
+              Cerrar
             </button>
             <button
               type="submit"

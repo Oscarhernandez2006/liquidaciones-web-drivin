@@ -21,6 +21,8 @@ export interface SolicitudAlmuerzo {
   resuelto_por_nombre: string | null;
   resuelto_en: string | null;
   motivo_rechazo: string | null;
+  motivo_reprogramacion: string | null;
+  disponible_en: string | null;
   terminado_en: string | null;
 }
 
