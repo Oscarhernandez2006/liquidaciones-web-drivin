@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { ConsultaResultado, LiquidacionDetalle, FueraRangoPeriodo } from "@/lib/tipos";
 import TarjetaPeriodo from "./TarjetaPeriodo";
 import ModuloFletes from "./ModuloFletes";
+import TarjetaAlmuerzo from "./TarjetaAlmuerzo";
 import ReciboLiquidacion from "./ReciboLiquidacion";
 import { moneda } from "@/lib/formato";
 import { guardarSesion, obtenerSesion, limpiarSesion } from "@/lib/sesion";
@@ -290,6 +291,8 @@ export default function ConsultaForm() {
               )}
             </div>
           </div>
+
+          <TarjetaAlmuerzo documento={d.documento} />
         </div>
       </div>
 
