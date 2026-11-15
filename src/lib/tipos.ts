@@ -15,6 +15,21 @@ export interface LiquidacionFila {
   variablePedido: number | null;
   variableKm: number | null;
   total: number;
+  /** Pedidos extendidos autorizados (validados en Pedidos Confirmados); ausente en publicaciones antiguas. */
+  pedidosExtendidosAutorizados?: number;
+  /** Valor pagado por extensiones (ya incluido en gasolina). */
+  valorExtendido?: number;
+  /** Detalle de las extensiones con pedidos autorizados en el período. */
+  extensiones?: ExtensionAutorizada[];
+}
+
+/** Día extendido con pedidos autorizados para pago. */
+export interface ExtensionAutorizada {
+  dia: string; // dd/MM/yyyy
+  puntoVenta: string;
+  pedidos: number;
+  pedidosAutorizados: number;
+  valorAutorizado: number;
 }
 
 /** Datos identificatorios del domiciliario. */

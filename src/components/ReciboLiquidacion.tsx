@@ -8,6 +8,9 @@ import BotonImprimir from "./BotonImprimir";
 /** Recibo/desprendible de liquidación de un domiciliario. */
 export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDetalle }) {
   const { domiciliario, fila } = detalle;
+  // Solo se muestran las extensiones autorizadas; las publicaciones antiguas no traen el campo.
+  const extensionesAutorizadas = fila.pedidosExtendidosAutorizados ?? 0;
+  const extensiones = (fila.extensiones ?? []).filter((e) => e.pedidosAutorizados > 0);
 
   return (
     <div className="print-full overflow-hidden rounded-xl border border-drivin-border bg-white shadow-tarjeta">
@@ -39,13 +42,52 @@ export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDet
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-2 gap-3 px-6 py-5 sm:grid-cols-3 lg:grid-cols-5 print:grid-cols-5 print:gap-2 print:px-4 print:py-3">
+      <div className="grid grid-cols-2 gap-3 px-6 py-5 sm:grid-cols-3 lg:grid-cols-6 print:grid-cols-6 print:gap-2 print:px-4 print:py-3">
         <MetricaChip etiqueta="Pedidos" valor={numero(fila.pedidos)} />
         <MetricaChip etiqueta="Run Errands" valor={numero(fila.runErrands)} />
         <MetricaChip etiqueta="Fuera de rango" valor={numero(fila.fueraRango)} />
         <MetricaChip etiqueta="No confirmados" valor={numero(fila.noConfirmados)} />
         <MetricaChip etiqueta="Kilómetros" valor={numero(fila.kilometros, 1)} />
+        <MetricaChip etiqueta="Extensiones" valor={numero(extensionesAutorizadas)} />
       </div>
+
+      {/* Extensiones autorizadas del período */}
+      {extensiones.length > 0 && (
+        <div className="px-6 pb-5 print:px-4 print:pb-3">
+          <div className="overflow-hidden rounded-lg border border-drivin-border shadow-tarjeta">
+            <div className="flex items-center justify-between bg-drivin-indigo/10 px-4 py-2.5">
+              <span className="text-sm font-bold text-drivin-indigoDark">Extensiones autorizadas</span>
+              <span className="text-xs font-medium text-drivin-muted">
+                {numero(extensionesAutorizadas)} pedido{extensionesAutorizadas === 1 ? "" : "s"}
+                {" · "}
+                {moneda(fila.valorExtendido ?? 0)}
+              </span>
+            </div>
+            <ul>
+              {extensiones.map((e, i) => (
+                <li
+                  key={`${e.dia}-${e.puntoVenta}-${i}`}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-drivin-border px-4 py-2.5"
+                >
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-drivin-ink">{e.dia}</div>
+                    <div className="truncate text-xs text-drivin-muted">{e.puntoVenta}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-drivin-ink">{moneda(e.valorAutorizado)}</div>
+                    <div className="text-xs text-drivin-muted">
+                      {numero(e.pedidosAutorizados)} de {numero(e.pedidos)} pedido{e.pedidos === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-drivin-border bg-drivin-bg px-4 py-2 text-xs text-drivin-muted">
+              El valor de las extensiones ya está incluido en el concepto Gasolina.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conceptos por sección */}
       <div className="grid gap-4 px-6 pb-6 lg:grid-cols-3 print:grid-cols-3 print:gap-2">

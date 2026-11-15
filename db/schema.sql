@@ -45,7 +45,14 @@ CREATE INDEX IF NOT EXISTS ix_liqpub_doc_cod
 --   "runErrandsMonto":40000,
 --   "variablePedido": 210000,
 --   "variableKm":     95000,
---   "total":          575000
+--   "total":          575000,
+--   "diasExtendidos": 2,
+--   "pedidosExtendidos": 9,
+--   "pedidosExtendidosAutorizados": 7,   // solo los validados "Sí" en Pedidos Confirmados
+--   "valorExtendido": 23100,             // ya sumado en gasolina
+--   "extensiones": [                      // detalle de extensiones con pedidos autorizados
+--     { "dia": "18/10/2026", "puntoVenta": "Pdv La 70", "pedidos": 5, "pedidosAutorizados": 4, "valorAutorizado": 13200 }
+--   ]
 -- }
 
 -- ============================================================================
