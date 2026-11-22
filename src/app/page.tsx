@@ -11,11 +11,11 @@ export default function Home() {
       <Header />
 
       {/* Encabezado con acento de marca */}
-      <div className="bg-drivin-dark pb-12 pt-4 text-center">
-        <h1 className="px-5 text-2xl font-extrabold text-white sm:text-3xl">
+      <div className="bg-marca pb-12 pt-8 text-center">
+        <h1 className="px-5 text-2xl font-bold text-white sm:text-3xl">
           Tu liquidación de incentivos, siempre a la mano
         </h1>
-        <p className="mx-auto mt-2 max-w-xl px-5 text-sm text-white/70">
+        <p className="mx-auto mt-2 max-w-xl px-5 text-sm text-blue-100">
           Consulta y descarga el detalle de tus pagos por período.
         </p>
       </div>

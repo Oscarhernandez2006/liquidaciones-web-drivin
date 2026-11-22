@@ -174,7 +174,7 @@ export default function ConstructorRuta({ puntos, onCambio }: Props) {
                   />
                 )}
                 <span
-                  className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold text-white shadow"
+                  className="z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow"
                   style={{ backgroundColor: color }}
                 >
                   {inicial}
@@ -184,9 +184,9 @@ export default function ConstructorRuta({ puntos, onCambio }: Props) {
                     {esOrigen ? <IconoBandera className="h-4 w-4" /> : <IconoMeta className="h-4 w-4" />}
                   </span>
                 )}
-                <div className="min-w-0 flex-1 rounded-xl border border-drivin-border bg-white px-3 py-2 shadow-sm">
+                <div className="min-w-0 flex-1 rounded-2xl border border-drivin-border bg-white px-3 py-2 shadow-sm">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-extrabold tracking-wide" style={{ color }}>
+                    <span className="text-[10px] font-bold tracking-wide" style={{ color }}>
                       {etiqueta}
                     </span>
                     {p.lat == null && (

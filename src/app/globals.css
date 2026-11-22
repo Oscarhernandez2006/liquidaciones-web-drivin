@@ -12,7 +12,7 @@ body {
   margin: 0;
   background: #f9fafb;
   color: #111827;
-  font-family: "Segoe UI", system-ui, Arial, sans-serif;
+  font-family: var(--font-inter), "Segoe UI", system-ui, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

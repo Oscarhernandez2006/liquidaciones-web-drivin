@@ -13,7 +13,7 @@ export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDet
   const extensiones = (fila.extensiones ?? []).filter((e) => e.pedidosAutorizados > 0);
 
   return (
-    <div className="print-full overflow-hidden rounded-xl border border-drivin-border bg-white shadow-tarjeta">
+    <div className="print-full overflow-hidden rounded-2xl border border-drivin-border bg-white shadow-tarjeta">
       {/* Cabecera */}
       <div className="border-b border-drivin-border bg-drivin-bg px-6 py-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -116,12 +116,12 @@ export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDet
       </div>
 
       {/* Total */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-drivin-ink px-6 py-5 print:justify-end">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-marca px-6 py-5 print:justify-end">
         <div className="print:text-right">
-          <div className="text-xs font-medium uppercase tracking-wide text-white/60">
+          <div className="text-xs font-medium uppercase tracking-wide text-blue-100">
             Liquidación total
           </div>
-          <div className="text-3xl font-extrabold text-white">{moneda(detalle.total)}</div>
+          <div className="text-3xl font-bold text-white">{moneda(detalle.total)}</div>
         </div>
         <BotonImprimir />
       </div>

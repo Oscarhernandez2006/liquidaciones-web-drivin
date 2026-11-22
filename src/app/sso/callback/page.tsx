@@ -72,7 +72,7 @@ function SsoCallbackCard({
 }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-drivin-bg px-6">
-      <div className="w-full max-w-md rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta">
+      <div className="w-full max-w-md rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta">
         <h1 className="text-lg font-bold text-drivin-ink">Acceso desde Suite Santacruz</h1>
 
         {!error ? (

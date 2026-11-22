@@ -169,7 +169,7 @@ export default function ConsultaForm() {
   // Carga inicial desde una sesión vigente.
   if (cargaInicial) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-xl border border-drivin-border bg-white p-10 shadow-tarjeta">
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-2xl border border-drivin-border bg-white p-10 shadow-tarjeta">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-drivin-border border-t-drivin-indigo" />
         <p className="text-sm font-medium text-drivin-muted">Cargando tus liquidaciones…</p>
       </div>
@@ -211,13 +211,13 @@ export default function ConsultaForm() {
       <>
       <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl border border-drivin-border bg-white shadow-tarjeta">
         {/* Cabecera con datos principales */}
-        <div className="flex flex-col items-center gap-4 bg-drivin-dark px-6 py-8 text-center sm:flex-row sm:text-left">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-drivin-indigo text-2xl font-extrabold text-white">
+        <div className="flex flex-col items-center gap-4 bg-marca px-6 py-8 text-center sm:flex-row sm:text-left">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-white/15 text-2xl font-bold text-white ring-2 ring-white/30">
             {iniciales || "🙍"}
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-extrabold text-white">{d.nombre}</h2>
-            <p className="mt-1 text-sm text-white/70">
+            <h2 className="text-xl font-bold text-white">{d.nombre}</h2>
+            <p className="mt-1 text-sm text-blue-100">
               Domiciliario · {d.pdv || "Sin punto de venta"}
             </p>
           </div>
@@ -254,14 +254,14 @@ export default function ConsultaForm() {
           <div className="flex flex-col rounded-xl border border-drivin-border p-5">
             <h3 className="text-base font-bold text-drivin-ink">Mis liquidaciones</h3>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-lg bg-drivin-bg p-4 text-center">
-                <div className="text-2xl font-extrabold text-drivin-indigo">
+              <div className="rounded-xl bg-drivin-marca50 p-4 text-center">
+                <div className="text-2xl font-bold text-drivin-indigo">
                   {liquidaciones.length}
                 </div>
                 <div className="text-xs font-semibold text-drivin-muted">Períodos</div>
               </div>
-              <div className="rounded-lg bg-drivin-bg p-4 text-center">
-                <div className="text-lg font-extrabold text-drivin-indigo">
+              <div className="rounded-xl bg-drivin-marca50 p-4 text-center">
+                <div className="text-lg font-bold text-drivin-indigo">
                   {moneda(totalAcumulado)}
                 </div>
                 <div className="text-xs font-semibold text-drivin-muted">Total acumulado</div>
@@ -365,7 +365,7 @@ export default function ConsultaForm() {
                   </span>
                   <div className="mt-4 border-t border-amber-200 pt-3">
                     <div className="text-xs font-medium text-amber-700/80">Pedidos fuera de rango</div>
-                    <div className="text-2xl font-extrabold text-amber-800">{p.total}</div>
+                    <div className="text-2xl font-bold text-amber-800">{p.total}</div>
                   </div>
                   <span className="mt-3 text-sm font-semibold text-amber-700 transition group-hover:translate-x-0.5">
                     Ver detalle →
@@ -423,7 +423,7 @@ export default function ConsultaForm() {
       {/* Formulario de ingreso (sin sesión) */}
       <form
         onSubmit={onSubmit}
-        className="mx-auto max-w-md rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+        className="mx-auto max-w-md rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
       >
         <h1 className="text-xl font-bold text-drivin-ink">Consulta tu liquidación</h1>
         <p className="mt-1 text-sm text-drivin-muted">
@@ -483,7 +483,7 @@ function ModalOverlay({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 sm:p-6"
+      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/55 p-4 sm:p-6"
       onClick={onClose}
     >
       <div

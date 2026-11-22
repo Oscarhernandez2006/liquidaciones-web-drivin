@@ -157,7 +157,7 @@ export default function MaestroPortal() {
 
   if (vista === "cargando") {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-xl border border-drivin-border bg-white p-10 shadow-tarjeta">
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-2xl border border-drivin-border bg-white p-10 shadow-tarjeta">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-drivin-border border-t-drivin-indigo" />
         <p className="text-sm font-medium text-drivin-muted">Cargando…</p>
       </div>
@@ -168,7 +168,7 @@ export default function MaestroPortal() {
     return (
       <form
         onSubmit={onLogin}
-        className="mx-auto max-w-md rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+        className="mx-auto max-w-md rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
       >
         <h2 className="text-xl font-bold text-drivin-ink">Ingreso de usuario maestro</h2>
         <p className="mt-1 text-sm text-drivin-muted">
@@ -262,7 +262,7 @@ export default function MaestroPortal() {
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         {/* Selector de domiciliarios */}
-        <aside className="rounded-xl border border-drivin-border bg-white p-4 shadow-tarjeta">
+        <aside className="rounded-2xl border border-drivin-border bg-white p-4 shadow-tarjeta">
           {seleccionado && !listaAbierta ? (
             <>
               <button
@@ -273,11 +273,11 @@ export default function MaestroPortal() {
                   <span className="block truncate text-sm font-semibold text-white">
                     {seleccionado.nombre}
                   </span>
-                  <span className="block text-xs text-indigo-100">
+                  <span className="block text-xs text-blue-100">
                     Doc {seleccionado.documento} · {seleccionado.codigoVehiculo} · {seleccionado.cantidad} liq.
                   </span>
                 </span>
-                <span aria-hidden className="ml-2 shrink-0 text-indigo-100">▾</span>
+                <span aria-hidden className="ml-2 shrink-0 text-blue-100">▾</span>
               </button>
               <p className="mt-2 text-center text-xs text-drivin-muted">
                 Toca de nuevo para elegir otro domiciliario
@@ -313,7 +313,7 @@ export default function MaestroPortal() {
                           <span className={`block text-sm font-semibold ${activo ? "text-white" : "text-drivin-ink"}`}>
                             {d.nombre}
                           </span>
-                          <span className={`block text-xs ${activo ? "text-indigo-100" : "text-drivin-muted"}`}>
+                          <span className={`block text-xs ${activo ? "text-blue-100" : "text-drivin-muted"}`}>
                             Doc {d.documento} · {d.codigoVehiculo} · {d.cantidad} liq.
                           </span>
                         </button>
@@ -339,7 +339,7 @@ export default function MaestroPortal() {
           )}
 
           {seleccionado && cargandoLiq && (
-            <div className="flex items-center gap-3 rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta">
+            <div className="flex items-center gap-3 rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta">
               <div className="h-6 w-6 animate-spin rounded-full border-4 border-drivin-border border-t-drivin-indigo" />
               <p className="text-sm font-medium text-drivin-muted">Cargando liquidaciones…</p>
             </div>
@@ -354,7 +354,7 @@ export default function MaestroPortal() {
                   {resultado.domiciliario.codigoVehiculo}
                 </p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(270px,1fr))]">
                 {resultado.liquidaciones.map((l) => (
                   <TarjetaPeriodo
                     key={l.id}
@@ -367,7 +367,7 @@ export default function MaestroPortal() {
           )}
 
           {seleccionado && !cargandoLiq && (!resultado || resultado.liquidaciones.length === 0) && (
-            <div className="rounded-xl border border-drivin-border bg-white p-8 text-center shadow-tarjeta">
+            <div className="rounded-2xl border border-drivin-border bg-white p-8 text-center shadow-tarjeta">
               <p className="text-sm font-medium text-amber-800">
                 Este domiciliario no tiene liquidaciones publicadas.
               </p>

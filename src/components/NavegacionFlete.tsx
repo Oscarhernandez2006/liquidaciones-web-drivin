@@ -258,7 +258,7 @@ export default function NavegacionFlete({ documento, codigoVehiculo, flete, onSa
           )}
 
           {/* Progreso de la ruta */}
-          <div className="rounded-xl border border-drivin-border bg-white p-4">
+          <div className="rounded-2xl border border-drivin-border bg-white p-4">
             <p className="mb-3 text-sm font-bold text-drivin-ink">Ruta</p>
             <ol className="space-y-3">
               {paradas.map((p, i) => {
@@ -277,7 +277,7 @@ export default function NavegacionFlete({ documento, codigoVehiculo, flete, onSa
                       <div className="flex items-center gap-2">
                         <p className="truncate text-sm font-semibold text-drivin-ink">{p.descripcion}</p>
                         {esObjetivo && (
-                          <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+                          <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                             siguiente
                           </span>
                         )}

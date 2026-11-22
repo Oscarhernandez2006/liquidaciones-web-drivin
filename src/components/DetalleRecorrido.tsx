@@ -89,7 +89,7 @@ export default function DetalleRecorrido({ documento, flete, onSalir }: Props) {
 
   const Metric = ({ etiqueta, valor }: { etiqueta: string; valor: string }) => (
     <div className="rounded-lg bg-drivin-bg p-3 text-center">
-      <div className="text-lg font-extrabold text-drivin-indigo">{valor}</div>
+      <div className="text-lg font-bold text-drivin-indigo">{valor}</div>
       <div className="text-xs font-semibold text-drivin-muted">{etiqueta}</div>
     </div>
   );
@@ -134,7 +134,7 @@ export default function DetalleRecorrido({ documento, flete, onSalir }: Props) {
           </div>
 
           {/* Tabla de tramos */}
-          <div className="overflow-hidden rounded-xl border border-drivin-border bg-white">
+          <div className="overflow-hidden rounded-2xl border border-drivin-border bg-white">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-drivin-bg text-left text-xs font-semibold text-drivin-muted">

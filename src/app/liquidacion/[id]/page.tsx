@@ -88,7 +88,7 @@ export default function DetalleLiquidacionPage({ params }: { params: { id: strin
 
 function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   return (
-    <div className="rounded-xl border border-drivin-border bg-white p-8 text-center shadow-tarjeta">
+    <div className="rounded-2xl border border-drivin-border bg-white p-8 text-center shadow-tarjeta">
       <p className="text-lg font-bold text-drivin-ink">{titulo}</p>
       <p className="mt-1 text-sm text-drivin-muted">{texto}</p>
       <Link

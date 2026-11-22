@@ -158,7 +158,7 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
               ? `En almuerzo · termina a las ${hora(actual.fin)}`
               : ETIQUETA[actual.estado]}
           </p>
-          <p className="mt-1 text-2xl font-extrabold">
+          <p className="mt-1 text-2xl font-bold">
             {hora(actual.inicio)} – {hora(actual.fin)}
           </p>
           {actual.estado === "reprogramada" && (

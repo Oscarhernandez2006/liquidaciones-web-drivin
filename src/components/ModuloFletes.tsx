@@ -639,7 +639,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
         {/* Formulario de registro */}
         <form
           onSubmit={onSubmit}
-          className="rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+          className="rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
         >
           <h3 className="text-base font-bold text-drivin-ink">Nuevo flete</h3>
 
@@ -671,7 +671,7 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
         </form>
 
         {/* Listado de fletes */}
-        <div className="rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta">
+        <div className="rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta">
           <h3 className="text-base font-bold text-drivin-ink">
             Fletes registrados{fletes.length > 0 ? ` (${fletes.length})` : ""}
           </h3>
@@ -805,11 +805,11 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
       {/* Modal de edición */}
       {editando && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4"
           onMouseDown={cerrarEdicion}
         >
           <div
-            className="max-h-[90vh] w-full max-w-md overflow-auto rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+            className="max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
@@ -909,11 +909,11 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
       {/* Modal de geolocalización */}
       {geoFlete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4"
           onMouseDown={cerrarGeo}
         >
           <div
-            className="max-h-[90vh] w-full max-w-md overflow-auto rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+            className="max-h-[90vh] w-full max-w-md overflow-auto rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
@@ -983,11 +983,11 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
       {/* Modal de confirmación: marcar como terminado */}
       {confirmarFlete && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4"
           onMouseDown={() => setConfirmarFlete(null)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+            className="w-full max-w-sm rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-drivin-ink">¿Marcar como terminado?</h3>
@@ -1022,11 +1022,11 @@ export default function ModuloFletes({ documento, codigoVehiculo, nombre, onVolv
       {/* Modal de envío a liquidación */}
       {mostrarEnvio && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-4"
           onMouseDown={() => !enviando && setMostrarEnvio(false)}
         >
           <div
-            className="w-full max-w-sm rounded-xl border border-drivin-border bg-white p-6 shadow-tarjeta"
+            className="w-full max-w-sm rounded-2xl border border-drivin-border bg-white p-6 shadow-tarjeta"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-drivin-ink">Enviar fletes a liquidar</h3>
