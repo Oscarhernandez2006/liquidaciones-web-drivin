@@ -48,7 +48,7 @@ export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDet
         <MetricaChip etiqueta="Fuera de rango" valor={numero(fila.fueraRango)} />
         <MetricaChip etiqueta="No confirmados" valor={numero(fila.noConfirmados)} />
         <MetricaChip etiqueta="Kilómetros" valor={numero(fila.kilometros, 1)} />
-        <MetricaChip etiqueta="Extensiones" valor={numero(extensionesAutorizadas)} />
+        <MetricaChip etiqueta="Green" valor={numero(fila.pedidosGreen ?? 0)} />
       </div>
 
       {/* Extensiones autorizadas del período */}
@@ -58,6 +58,8 @@ export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDet
             <div className="flex items-center justify-between bg-drivin-indigo/10 px-4 py-2.5">
               <span className="text-sm font-bold text-drivin-indigoDark">Extensiones autorizadas</span>
               <span className="text-xs font-medium text-drivin-muted">
+                {numero(extensiones.length)} extensi{extensiones.length === 1 ? "ón" : "ones"}
+                {" · "}
                 {numero(extensionesAutorizadas)} pedido{extensionesAutorizadas === 1 ? "" : "s"}
                 {" · "}
                 {moneda(fila.valorExtendido ?? 0)}
@@ -111,6 +113,7 @@ export default function ReciboLiquidacion({ detalle }: { detalle: LiquidacionDet
           conceptos={[
             { label: "Variable pedidos", valor: fila.variablePedido },
             { label: "Variable kilómetros", valor: fila.variableKm },
+            ...(fila.otros ? [{ label: "Otros", valor: fila.otros }] : []),
           ]}
         />
       </div>

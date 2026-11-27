@@ -127,7 +127,7 @@ export default function TarjetaAlmuerzo({ documento }: { documento: string }) {
     ahora < new Date(actual.fin).getTime();
 
   return (
-    <div className="rounded-xl border border-drivin-border p-5 md:col-span-2">
+    <div className="rounded-xl border border-drivin-border p-4 sm:p-5 md:col-span-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-drivin-ink">Mi almuerzo de hoy</h3>

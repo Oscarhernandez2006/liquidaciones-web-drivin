@@ -7,6 +7,8 @@ export interface LiquidacionFila {
   runErrands: number;
   fueraRango: number;
   noConfirmados: number;
+  /** Pedidos marcados como Green; ausente en publicaciones antiguas. */
+  pedidosGreen?: number;
   kilometros: number;
   gasolina: number | null;
   rodamiento: number | null;
@@ -14,6 +16,8 @@ export interface LiquidacionFila {
   runErrandsMonto: number | null;
   variablePedido: number | null;
   variableKm: number | null;
+  /** Valor de zonas Green con destino "Otros": se paga y suma al total. Ausente en liquidaciones antiguas. */
+  otros?: number | null;
   total: number;
   /** Pedidos extendidos autorizados (validados en Pedidos Confirmados); ausente en publicaciones antiguas. */
   pedidosExtendidosAutorizados?: number;

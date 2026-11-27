@@ -11,17 +11,17 @@ export default function Home() {
       <Header />
 
       {/* Encabezado con acento de marca */}
-      <div className="bg-marca pb-12 pt-8 text-center">
-        <h1 className="px-5 text-2xl font-bold text-white sm:text-3xl">
+      <div className="bg-marca pb-10 pt-5 text-center sm:pb-12 sm:pt-8">
+        <h1 className="px-5 text-xl font-bold text-white sm:text-3xl">
           Tu liquidación de incentivos, siempre a la mano
         </h1>
-        <p className="mx-auto mt-2 max-w-xl px-5 text-sm text-blue-100">
+        <p className="mx-auto mt-1 max-w-xl px-5 text-xs text-blue-100 sm:mt-2 sm:text-sm">
           Consulta y descarga el detalle de tus pagos por período.
         </p>
       </div>
 
       {/* Formulario superpuesto */}
-      <div className="mx-auto -mt-8 max-w-5xl px-5 pb-16">
+      <div className="mx-auto -mt-8 max-w-5xl px-3 pb-10 sm:px-5 sm:pb-16">
         <ConsultaForm />
       </div>
     </main>
